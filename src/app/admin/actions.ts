@@ -148,7 +148,7 @@ export async function updateSiteSettings(formData: FormData) {
   await requireAuth();
 
   const entries = Array.from(formData.entries()).filter(
-    ([key]) => key !== "$ACTION_ID"
+    ([key]) => !key.startsWith("$ACTION_ID")
   );
 
   await Promise.all(

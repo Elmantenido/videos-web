@@ -61,7 +61,7 @@ export default async function VideoPage({ params }: Props) {
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <Link href="/" className="text-sm text-gray-500 hover:underline">
-        ← Volver
+        ← Back
       </Link>
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -103,7 +103,7 @@ export default async function VideoPage({ params }: Props) {
 
         <aside>
           <h2 className="mb-3 text-sm font-semibold text-gray-500">
-            Relacionados
+            Related
           </h2>
           <div className="flex flex-col gap-3">
             {related.map((r) => (

@@ -25,7 +25,7 @@ export default async function CategoryPage({ params }: Props) {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8">
       <Link href="/" className="text-sm text-gray-500 hover:underline">
-        ← Todas las categorías
+        ← All categories
       </Link>
       <h1 className="mt-2 mb-6 text-3xl font-bold">{category.name}</h1>
 
@@ -55,7 +55,7 @@ export default async function CategoryPage({ params }: Props) {
 
       {videos.length === 0 && (
         <p className="mt-10 text-center text-gray-500">
-          No hay videos en esta categoría todavía.
+          No videos in this category yet.
         </p>
       )}
     </main>

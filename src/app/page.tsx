@@ -23,18 +23,17 @@ export default async function HomePage() {
     <main>
       <div className="site-shell">
         <header className="topbar">
-          <Link href="/" className="brand" aria-label={`${s.brand_prefix}${s.brand_suffix} inicio`}>
+          <Link href="/" className="brand" aria-label={`${s.brand_prefix}${s.brand_suffix} home`}>
             <span className="brand-mark">{s.brand_prefix.charAt(0)}</span>
             <span>{s.brand_prefix}<span>{s.brand_suffix}</span></span>
           </Link>
-          <nav className="main-nav" aria-label="Navegación principal">
+          <nav className="main-nav" aria-label="Main navigation">
             <Link className="active" href="/">{s.nav_home}</Link>
             <Link href="#catalogo">{s.nav_explore}</Link>
             <Link href="#categorias">{s.nav_categories}</Link>
           </nav>
           <div className="top-actions">
-            <button className="icon-button" aria-label="Buscar videos" title="Buscar videos">⌕</button>
-            <Link href="/admin" className="admin-link">{s.admin_link_label} <span>+</span></Link>
+            <button className="icon-button" aria-label="Search videos" title="Search videos">⌕</button>
           </div>
         </header>
 
@@ -59,7 +58,7 @@ export default async function HomePage() {
             <p className="section-kicker">{s.categories_kicker}</p>
             <h2>{s.categories_title_line1} <em>{s.categories_title_emphasis}</em></h2>
           </div>
-          <nav className="category-links" aria-label="Categorías">
+          <nav className="category-links" aria-label="Categories">
             <Link className="category-pill selected" href="#catalogo">{s.category_pill_all} <span>{videos.length}</span></Link>
             {categories.map((category) => (
               <Link key={category.id} className="category-pill" href={`/categoria/${category.slug}`}>
