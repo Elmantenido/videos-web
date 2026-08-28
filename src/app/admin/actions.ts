@@ -174,4 +174,5 @@ export async function updateSiteSettings(formData: FormData) {
 
   revalidatePath("/");
   revalidatePath("/admin/settings");
+  revalidatePath("/admin/seo");
 }
