@@ -76,6 +76,7 @@ em { color: var(--lime); font-family: Georgia, serif; font-style: italic; font-w
 .video-meta { align-items: start; display: flex; justify-content: space-between; padding-top: 13px; }
 .video-category { color: var(--lime); font-size: 10px; letter-spacing: .13em; margin: 0 0 6px; text-transform: uppercase; }
 .video-meta h3 { font-size: 14px; font-weight: 500; line-height: 1.3; margin: 0; }
+.video-studio { color: var(--muted); font-size: 11px; margin: 4px 0 0; }
 .card-arrow { color: var(--muted); font-size: 17px; }
 .empty-state { color: var(--muted); padding: 30px 0; }.empty-state a { color: var(--lime); }
 .footer { border-top: 1px solid var(--line); color: #777a72; display: flex; font-size: 10px; justify-content: space-between; letter-spacing: .08em; padding: 23px 0; text-transform: uppercase; }

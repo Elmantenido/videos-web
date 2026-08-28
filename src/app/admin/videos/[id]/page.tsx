@@ -8,10 +8,13 @@ type Props = { params: Promise<{ id: string }> };
 
 export default async function EditVideoPage({ params }: Props) {
   const { id } = await params;
-  const video = await prisma.video.findUnique({
-    where: { id: Number(id) },
-    include: { categories: true, tags: true },
-  });
+  const [video, categories] = await Promise.all([
+    prisma.video.findUnique({
+      where: { id: Number(id) },
+      include: { categories: true, tags: true },
+    }),
+    prisma.category.findMany({ orderBy: { name: "asc" } }),
+  ]);
   if (!video) notFound();
 
   const boundUpdate = updateVideo.bind(null, video.id);
@@ -25,14 +28,16 @@ export default async function EditVideoPage({ params }: Props) {
       <VideoForm
         action={boundUpdate}
         submitLabel="Guardar cambios"
+        categories={categories}
         defaultValues={{
           title: video.title,
           description: video.description,
           embedUrl: video.embedUrl,
           thumbnail: video.thumbnail,
           duration: video.duration,
+          studio: video.studio,
           published: video.published,
-          categoryNames: video.categories.map((c) => c.name).join(", "),
+          categoryIds: video.categories.map((c) => c.id),
           tagNames: video.tags.map((t) => t.name).join(", "),
         }}
       />

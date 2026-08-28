@@ -73,6 +73,21 @@ async function connectOrCreateNamed(
   return rows.map((r) => ({ id: r.id }));
 }
 
+async function resolveCategoryConnections(formData: FormData) {
+  const selectedIds = formData
+    .getAll("categoryIds")
+    .map((v) => Number(v))
+    .filter((n) => !Number.isNaN(n))
+    .map((id) => ({ id }));
+
+  const newOnes = await connectOrCreateNamed(
+    "category",
+    parseNames(formData.get("categoryNames"))
+  );
+
+  return [...selectedIds, ...newOnes];
+}
+
 export async function createVideo(formData: FormData) {
   await requireAuth();
 
@@ -80,10 +95,7 @@ export async function createVideo(formData: FormData) {
   const embedUrl = String(formData.get("embedUrl") ?? "").trim();
   if (!title || !embedUrl) throw new Error("Título y embed son obligatorios");
 
-  const categories = await connectOrCreateNamed(
-    "category",
-    parseNames(formData.get("categoryNames"))
-  );
+  const categories = await resolveCategoryConnections(formData);
   const tags = await connectOrCreateNamed("tag", parseNames(formData.get("tagNames")));
 
   await prisma.video.create({
@@ -94,6 +106,7 @@ export async function createVideo(formData: FormData) {
       embedUrl,
       thumbnail: String(formData.get("thumbnail") ?? "") || null,
       duration: String(formData.get("duration") ?? "") || null,
+      studio: String(formData.get("studio") ?? "") || null,
       published: formData.get("published") === "on",
       categories: { connect: categories },
       tags: { connect: tags },
@@ -112,10 +125,7 @@ export async function updateVideo(videoId: number, formData: FormData) {
   const embedUrl = String(formData.get("embedUrl") ?? "").trim();
   if (!title || !embedUrl) throw new Error("Título y embed son obligatorios");
 
-  const categories = await connectOrCreateNamed(
-    "category",
-    parseNames(formData.get("categoryNames"))
-  );
+  const categories = await resolveCategoryConnections(formData);
   const tags = await connectOrCreateNamed("tag", parseNames(formData.get("tagNames")));
 
   await prisma.video.update({
@@ -126,6 +136,7 @@ export async function updateVideo(videoId: number, formData: FormData) {
       embedUrl,
       thumbnail: String(formData.get("thumbnail") ?? "") || null,
       duration: String(formData.get("duration") ?? "") || null,
+      studio: String(formData.get("studio") ?? "") || null,
       published: formData.get("published") === "on",
       categories: { set: categories },
       tags: { set: tags },

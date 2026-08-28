@@ -82,7 +82,11 @@ export default async function HomePage() {
                   {video.duration && <span className="duration">{video.duration}</span>}
                 </div>
                 <div className="video-meta">
-                  <div><p className="video-category">{video.categories[0]?.name ?? "General"}</p><h3>{video.title}</h3></div>
+                  <div>
+                    <p className="video-category">{video.categories[0]?.name ?? "General"}</p>
+                    <h3>{video.title}</h3>
+                    {video.studio && <p className="video-studio">{video.studio}</p>}
+                  </div>
                   <span className="card-arrow">↗</span>
                 </div>
               </Link>

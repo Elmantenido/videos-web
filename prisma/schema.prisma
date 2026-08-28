@@ -29,6 +29,7 @@ model Video {
   embedUrl    String
   thumbnail   String?
   duration    String?
+  studio      String?
   source      String?
   published   Boolean    @default(true)
   createdAt   DateTime   @default(now())
