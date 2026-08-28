@@ -40,12 +40,15 @@ export default function VideoForm({ action, submitLabel, defaultValues }: Props)
       </label>
 
       <label className="text-sm font-medium">
-        URL del embed (ej. https://www.youtube.com/embed/XXXX)
-        <input
-          type="url"
+        Embed: pega la URL (ej. https://www.youtube.com/embed/XXXX) o el
+        código de inserción completo (el <code>&lt;iframe&gt;</code> o{" "}
+        <code>&lt;div&gt;</code> que te da la plataforma al elegir
+        &quot;insertar&quot;)
+        <textarea
           name="embedUrl"
           defaultValue={defaultValues?.embedUrl}
-          className="mt-1 w-full rounded border px-3 py-2"
+          className="mt-1 w-full rounded border px-3 py-2 font-mono text-xs"
+          rows={4}
           required
         />
       </label>

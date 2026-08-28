@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { isEmbedUrl, sanitizeEmbedCode } from "@/lib/embed";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -54,7 +55,7 @@ export default async function VideoPage({ params }: Props) {
     description: video.description ?? video.title,
     thumbnailUrl: video.thumbnail ?? undefined,
     uploadDate: video.createdAt.toISOString(),
-    embedUrl: video.embedUrl,
+    ...(isEmbedUrl(video.embedUrl) ? { embedUrl: video.embedUrl } : {}),
   };
 
   return (
@@ -65,14 +66,21 @@ export default async function VideoPage({ params }: Props) {
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px]">
         <div>
-          <div className="aspect-video w-full overflow-hidden rounded-lg bg-black">
-            <iframe
-              src={video.embedUrl}
-              title={video.title}
-              className="h-full w-full"
-              allow="autoplay; encrypted-media; picture-in-picture"
-              allowFullScreen
-            />
+          <div className="aspect-video w-full overflow-hidden rounded-lg bg-black [&_iframe]:h-full [&_iframe]:w-full [&_video]:h-full [&_video]:w-full">
+            {isEmbedUrl(video.embedUrl) ? (
+              <iframe
+                src={video.embedUrl}
+                title={video.title}
+                className="h-full w-full"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+              />
+            ) : (
+              <div
+                className="h-full w-full"
+                dangerouslySetInnerHTML={{ __html: sanitizeEmbedCode(video.embedUrl) }}
+              />
+            )}
           </div>
           <h1 className="mt-4 text-2xl font-bold">{video.title}</h1>
           {video.categories.length > 0 && (
