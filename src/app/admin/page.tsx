@@ -1,118 +1,117 @@
-"use client";
+import Link from "next/link";
+import { prisma } from "@/lib/prisma";
+import { logout, deleteVideo } from "./actions";
 
-import { useState } from "react";
-
-export default function AdminPage() {
-  const [adminKey, setAdminKey] = useState("");
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    embedUrl: "",
-    thumbnail: "",
-    duration: "",
-    categoryNames: "",
+export default async function AdminDashboard() {
+  const videos = await prisma.video.findMany({
+    orderBy: { createdAt: "desc" },
+    include: { categories: true, tags: true },
   });
-  const [status, setStatus] = useState<string | null>(null);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setStatus("Guardando...");
-    const res = await fetch("/api/videos", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-key": adminKey,
-      },
-      body: JSON.stringify({
-        ...form,
-        categoryNames: form.categoryNames
-          .split(",")
-          .map((name) => name.trim())
-          .filter(Boolean),
-      }),
-    });
-
-    if (res.ok) {
-      setStatus("Video agregado ✔");
-      setForm({
-        title: "",
-        description: "",
-        embedUrl: "",
-        thumbnail: "",
-        duration: "",
-        categoryNames: "",
-      });
-    } else {
-      const data = await res.json().catch(() => ({}));
-      setStatus(`Error: ${data.error ?? res.statusText}`);
-    }
-  }
 
   return (
-    <main className="mx-auto max-w-xl px-4 py-10">
-      <h1 className="mb-6 text-2xl font-bold">Agregar video</h1>
+    <main className="mx-auto max-w-6xl px-4 py-8">
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Panel de administración</h1>
+        <div className="flex gap-3">
+          <Link
+            href="/admin/settings"
+            className="rounded border px-3 py-2 text-sm hover:bg-gray-50"
+          >
+            Textos del sitio
+          </Link>
+          <Link
+            href="/admin/videos/new"
+            className="rounded bg-black px-3 py-2 text-sm text-white hover:bg-gray-800"
+          >
+            Nuevo video
+          </Link>
+          <form action={logout}>
+            <button className="rounded border px-3 py-2 text-sm hover:bg-gray-50">
+              Cerrar sesión
+            </button>
+          </form>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-        <input
-          type="password"
-          placeholder="Clave de administrador"
-          value={adminKey}
-          onChange={(e) => setAdminKey(e.target.value)}
-          className="rounded border px-3 py-2"
-          required
-        />
-        <input
-          type="text"
-          placeholder="Título"
-          value={form.title}
-          onChange={(e) => setForm({ ...form, title: e.target.value })}
-          className="rounded border px-3 py-2"
-          required
-        />
-        <textarea
-          placeholder="Descripción"
-          value={form.description}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-          className="rounded border px-3 py-2"
-          rows={3}
-        />
-        <input
-          type="url"
-          placeholder="URL del embed (ej. https://www.youtube.com/embed/XXXX)"
-          value={form.embedUrl}
-          onChange={(e) => setForm({ ...form, embedUrl: e.target.value })}
-          className="rounded border px-3 py-2"
-          required
-        />
-        <input
-          type="url"
-          placeholder="URL de la miniatura (opcional)"
-          value={form.thumbnail}
-          onChange={(e) => setForm({ ...form, thumbnail: e.target.value })}
-          className="rounded border px-3 py-2"
-        />
-        <input
-          type="text"
-          placeholder="Duración (ej. 12:34)"
-          value={form.duration}
-          onChange={(e) => setForm({ ...form, duration: e.target.value })}
-          className="rounded border px-3 py-2"
-        />
-        <input
-          type="text"
-          placeholder="Categorías (separadas por coma, ej. Tutoriales, Vlogs)"
-          value={form.categoryNames}
-          onChange={(e) => setForm({ ...form, categoryNames: e.target.value })}
-          className="rounded border px-3 py-2"
-        />
-        <button
-          type="submit"
-          className="rounded bg-black px-4 py-2 text-white hover:bg-gray-800"
-        >
-          Guardar
-        </button>
-        {status && <p className="text-sm text-gray-600">{status}</p>}
-      </form>
+      <div className="overflow-x-auto rounded border">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+            <tr>
+              <th className="px-3 py-2">Miniatura</th>
+              <th className="px-3 py-2">Título</th>
+              <th className="px-3 py-2">Categorías</th>
+              <th className="px-3 py-2">Tags</th>
+              <th className="px-3 py-2">Estado</th>
+              <th className="px-3 py-2" />
+            </tr>
+          </thead>
+          <tbody>
+            {videos.map((video) => (
+              <tr key={video.id} className="border-t">
+                <td className="px-3 py-2">
+                  <div className="h-12 w-20 overflow-hidden rounded bg-gray-100">
+                    {video.thumbnail && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={video.thumbnail}
+                        alt={video.title}
+                        className="h-full w-full object-cover"
+                      />
+                    )}
+                  </div>
+                </td>
+                <td className="px-3 py-2 font-medium">{video.title}</td>
+                <td className="px-3 py-2 text-gray-500">
+                  {video.categories.map((c) => c.name).join(", ") || "—"}
+                </td>
+                <td className="px-3 py-2 text-gray-500">
+                  {video.tags.map((t) => t.name).join(", ") || "—"}
+                </td>
+                <td className="px-3 py-2">
+                  {video.published ? (
+                    <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-700">
+                      Publicado
+                    </span>
+                  ) : (
+                    <span className="rounded bg-gray-100 px-2 py-1 text-xs text-gray-600">
+                      Oculto
+                    </span>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <div className="flex justify-end gap-2">
+                    <Link
+                      href={`/admin/videos/${video.id}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      Editar
+                    </Link>
+                    <form
+                      action={async () => {
+                        "use server";
+                        await deleteVideo(video.id);
+                      }}
+                    >
+                      <button className="text-red-600 hover:underline">
+                        Borrar
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {videos.length === 0 && (
+          <p className="p-6 text-center text-gray-500">
+            Aún no hay videos. Crea el primero desde{" "}
+            <Link href="/admin/videos/new" className="text-blue-600 hover:underline">
+              Nuevo video
+            </Link>
+            .
+          </p>
+        )}
+      </div>
     </main>
   );
 }

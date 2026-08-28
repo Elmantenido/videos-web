@@ -14,6 +14,13 @@ model Category {
   videos Video[]
 }
 
+model Tag {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  slug   String  @unique
+  videos Video[]
+}
+
 model Video {
   id          Int        @id @default(autoincrement())
   title       String
@@ -26,4 +33,10 @@ model Video {
   published   Boolean    @default(true)
   createdAt   DateTime   @default(now())
   categories  Category[]
+  tags        Tag[]
+}
+
+model SiteSetting {
+  key   String @id
+  value String
 }
