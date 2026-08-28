@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  slug   String  @unique
+  videos Video[]
+}
+
+model Video {
+  id          Int        @id @default(autoincrement())
+  title       String
+  slug        String     @unique
+  description String?
+  embedUrl    String
+  thumbnail   String?
+  duration    String?
+  source      String?
+  published   Boolean    @default(true)
+  createdAt   DateTime   @default(now())
+  categories  Category[]
+}
