@@ -336,7 +336,7 @@ export async function extractFromUrl(url: string) {
 
   const description = [
     baseDescription ? decodeHtmlEntities(baseDescription) : null,
-    alternateNames ? `Nombres alternativos: ${alternateNames}` : null,
+    alternateNames ? `Alternate Names: ${alternateNames}` : null,
   ]
     .filter(Boolean)
     .join("\n\n") || null;
@@ -355,7 +355,7 @@ export async function extractFromUrl(url: string) {
       thumbnail,
       backgroundImage: extractPosterImageUrl(html),
       duration: null as string | null,
-      studio: extractStudio(html),
+      studio: extractLabeledSection(html, "Studio") ?? extractStudio(html),
       previewHtml: previewImages.map((src) => `<img src="${src}">`).join(""),
       categoryNames: extractCategoryNames(html),
       tagNames: [] as string[],
