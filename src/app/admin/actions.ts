@@ -262,6 +262,30 @@ function extractPreviewImageUrls(html: string): string[] {
   return Array.from(new Set(urls));
 }
 
+function extractLabeledSection(html: string, label: string): string | null {
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = html.match(
+    new RegExp(
+      `<h[1-6][^>]*>\\s*${escaped}\\s*<\\/h[1-6]>([\\s\\S]*?)(?=<h[1-6][^>]*>|$)`,
+      "i"
+    )
+  );
+  if (!match) return null;
+  const text = decodeHtmlEntities(
+    match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")
+  );
+  return text || null;
+}
+
+function extractPosterImageUrl(html: string): string | null {
+  const imgTags = html.match(/<img\b[^>]*>/gi) ?? [];
+  for (const tag of imgTags) {
+    const match = tag.match(/src\s*=\s*["']([^"']*images\/posters[^"']*)["']/i);
+    if (match) return match[1];
+  }
+  return null;
+}
+
 export async function extractFromUrl(url: string) {
   await requireAuth();
 
@@ -294,9 +318,20 @@ export async function extractFromUrl(url: string) {
     return { error: "No se encontraron datos de video en esa página." };
   }
 
-  const description =
+  const synopsis = extractLabeledSection(html, "Synopsis");
+  const alternateNames = extractLabeledSection(html, "Alternate Names");
+
+  const baseDescription =
+    synopsis ??
     (typeof jsonLd?.description === "string" ? jsonLd.description : null) ??
     extractMetaContent(html, "og:description");
+
+  const description = [
+    baseDescription ? decodeHtmlEntities(baseDescription) : null,
+    alternateNames ? `Nombres alternativos: ${alternateNames}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n\n") || null;
 
   const thumbnail =
     (typeof jsonLd?.thumbnailUrl === "string" ? jsonLd.thumbnailUrl : null) ??
@@ -307,10 +342,10 @@ export async function extractFromUrl(url: string) {
   return {
     data: {
       title: decodeHtmlEntities(title),
-      description: description ? decodeHtmlEntities(description) : null,
+      description,
       embedUrl: "",
       thumbnail,
-      backgroundImage: null as string | null,
+      backgroundImage: extractPosterImageUrl(html),
       duration: null as string | null,
       studio: extractStudio(html),
       previewHtml: previewImages.map((src) => `<img src="${src}">`).join(""),
