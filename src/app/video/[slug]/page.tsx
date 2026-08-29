@@ -2,10 +2,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { isEmbedUrl, sanitizeEmbedCode } from "@/lib/embed";
-import { recordView } from "@/lib/views";
+import { isEmbedUrl } from "@/lib/embed";
 import { getSiteSettings } from "@/lib/site-settings";
 import SiteHeader from "@/components/SiteHeader";
+import VideoPlayer from "@/components/VideoPlayer";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -38,7 +38,6 @@ export default async function VideoPage({ params }: Props) {
   const video = await getVideo(slug);
   if (!video) notFound();
 
-  await recordView(video.id);
   const s = await getSiteSettings();
 
   const categoryIds = video.categories.map((c) => c.id);
@@ -75,25 +74,17 @@ export default async function VideoPage({ params }: Props) {
       <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px]">
         <div>
           <div className="aspect-video w-full overflow-hidden rounded-lg bg-black [&_iframe]:h-full [&_iframe]:w-full [&_video]:h-full [&_video]:w-full">
-            {isEmbedUrl(video.embedUrl) ? (
-              <iframe
-                src={video.embedUrl}
-                title={video.title}
-                className="h-full w-full"
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowFullScreen
-              />
-            ) : (
-              <div
-                className="h-full w-full"
-                dangerouslySetInnerHTML={{ __html: sanitizeEmbedCode(video.embedUrl) }}
-              />
-            )}
+            <VideoPlayer
+              videoId={video.id}
+              embedUrl={video.embedUrl}
+              thumbnail={video.thumbnail}
+              title={video.title}
+            />
           </div>
           <h1 className="mt-4 text-2xl font-bold">{video.title}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
             {video.studio && <span>{video.studio}</span>}
-            <span>{(video.views + 1).toLocaleString()} views</span>
+            <span>{video.views.toLocaleString()} views</span>
           </div>
           {video.categories.length > 0 && (
             <div className="mt-1 flex flex-wrap gap-2">

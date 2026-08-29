@@ -13,9 +13,16 @@ function shuffle<T>(arr: T[]): T[] {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const take = Number(searchParams.get("take") ?? 24);
+  const excludeIds = (searchParams.get("excludeIds") ?? "")
+    .split(",")
+    .map((id) => Number(id))
+    .filter((id) => !Number.isNaN(id));
 
   const videos = await prisma.video.findMany({
-    where: { published: true },
+    where: {
+      published: true,
+      ...(excludeIds.length ? { id: { notIn: excludeIds } } : {}),
+    },
     include: { categories: true },
   });
 
