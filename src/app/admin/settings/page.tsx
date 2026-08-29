@@ -18,26 +18,37 @@ export default async function SiteSettingsPage() {
             <legend className="mb-1 text-sm font-semibold uppercase text-gray-500">
               {group.title}
             </legend>
-            {group.fields.map((field) => (
-              <label key={field.key} className="text-sm font-medium">
-                {field.label}
-                {field.multiline ? (
-                  <textarea
-                    name={field.key}
-                    defaultValue={values[field.key]}
-                    rows={3}
-                    className="mt-1 w-full rounded border px-3 py-2 font-normal"
-                  />
-                ) : (
+            {group.fields.map((field) =>
+              field.type === "checkbox" ? (
+                <label key={field.key} className="flex items-center gap-2 text-sm font-medium">
                   <input
-                    type="text"
+                    type="checkbox"
                     name={field.key}
-                    defaultValue={values[field.key]}
-                    className="mt-1 w-full rounded border px-3 py-2 font-normal"
+                    defaultChecked={values[field.key] === "true"}
                   />
-                )}
-              </label>
-            ))}
+                  {field.label}
+                </label>
+              ) : (
+                <label key={field.key} className="text-sm font-medium">
+                  {field.label}
+                  {field.multiline ? (
+                    <textarea
+                      name={field.key}
+                      defaultValue={values[field.key]}
+                      rows={3}
+                      className="mt-1 w-full rounded border px-3 py-2 font-normal"
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      name={field.key}
+                      defaultValue={values[field.key]}
+                      className="mt-1 w-full rounded border px-3 py-2 font-normal"
+                    />
+                  )}
+                </label>
+              )
+            )}
           </fieldset>
         ))}
 

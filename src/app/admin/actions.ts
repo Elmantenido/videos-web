@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slugify";
+import { SETTING_GROUPS, SEO_FIELDS } from "@/lib/site-settings";
 import {
   SESSION_COOKIE,
   checkCredentials,
@@ -165,18 +166,23 @@ export async function deleteCategory(categoryId: number) {
 export async function updateSiteSettings(formData: FormData) {
   await requireAuth();
 
-  const entries = Array.from(formData.entries()).filter(
-    ([key]) => !key.startsWith("$ACTION_ID")
-  );
+  const knownFields = [...SETTING_GROUPS.flatMap((g) => g.fields), ...SEO_FIELDS];
 
   await Promise.all(
-    entries.map(([key, value]) =>
-      prisma.siteSetting.upsert({
-        where: { key },
-        update: { value: String(value) },
-        create: { key, value: String(value) },
-      })
-    )
+    knownFields.map((field) => {
+      const value =
+        field.type === "checkbox"
+          ? formData.get(field.key) === "on"
+            ? "true"
+            : "false"
+          : String(formData.get(field.key) ?? "");
+
+      return prisma.siteSetting.upsert({
+        where: { key: field.key },
+        update: { value },
+        create: { key: field.key, value },
+      });
+    })
   );
 
   revalidatePath("/");

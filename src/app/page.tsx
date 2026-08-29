@@ -22,6 +22,41 @@ export default async function HomePage() {
     getTrending("today", 10),
   ]);
 
+  const heroEnabled = s.hero_enabled !== "false";
+
+  const catalogSection = (
+    <section id="catalogo" className="catalog-section">
+      <div className="section-heading">
+        <div><p className="section-kicker">{s.catalog_kicker}</p><h2>{s.catalog_title_line1} <em>{s.catalog_title_emphasis}</em></h2></div>
+        <Link href="#catalogo" className="view-all">{s.catalog_view_all} <span>→</span></Link>
+      </div>
+      <div className="catalog-grid">
+        {videos.map((video, index) => (
+          <Link key={video.id} href={`/video/${video.slug}`} className={`video-card ${index === 0 ? "featured-card" : ""}`}>
+            <div className="thumbnail-wrap">
+              {video.thumbnail ? <img src={video.thumbnail} alt={video.title} /> : <div className="no-thumbnail">{s.brand_prefix}{s.brand_suffix}</div>}
+              <span className="play-badge">▶</span>
+              {video.duration && <span className="duration">{video.duration}</span>}
+            </div>
+            <div className="video-meta">
+              <div>
+                <p className="video-category">{video.categories[0]?.name ?? "General"}</p>
+                <h3>{video.title}</h3>
+                {video.studio && <p className="video-studio">{video.studio}</p>}
+              </div>
+              <span className="card-arrow">↗</span>
+            </div>
+          </Link>
+        ))}
+      </div>
+      {videos.length === 0 && (
+        <p className="empty-state">
+          {s.catalog_empty_state} <Link href="/admin">/admin</Link>.
+        </p>
+      )}
+    </section>
+  );
+
   return (
     <main>
       <div className="site-shell">
@@ -41,21 +76,25 @@ export default async function HomePage() {
           </div>
         </header>
 
-        <section className="hero" style={{ backgroundImage: `url(${videos[0]?.thumbnail ?? fallbackArtwork})` }}>
-          <div className="hero-shade" />
-          <div className="hero-content">
-            <p className="eyebrow"><span /> {s.hero_eyebrow}</p>
-            <h1>{s.hero_title_line1}<br /><em>{s.hero_title_emphasis}</em> {s.hero_title_line2}</h1>
-            <p className="hero-copy">{s.hero_copy}</p>
-            <div className="hero-actions">
-              {videos[0] ? (
-                <Link href={`/video/${videos[0].slug}`} className="primary-button"><span>▶</span> {s.hero_cta_play}</Link>
-              ) : <span className="primary-button">{s.hero_cta_explore}</span>}
-              <Link href="#catalogo" className="ghost-button">{s.hero_cta_new} <span>↘</span></Link>
+        {!heroEnabled && catalogSection}
+
+        {heroEnabled && (
+          <section className="hero" style={{ backgroundImage: `url(${videos[0]?.thumbnail ?? fallbackArtwork})` }}>
+            <div className="hero-shade" />
+            <div className="hero-content">
+              <p className="eyebrow"><span /> {s.hero_eyebrow}</p>
+              <h1>{s.hero_title_line1}<br /><em>{s.hero_title_emphasis}</em> {s.hero_title_line2}</h1>
+              <p className="hero-copy">{s.hero_copy}</p>
+              <div className="hero-actions">
+                {videos[0] ? (
+                  <Link href={`/video/${videos[0].slug}`} className="primary-button"><span>▶</span> {s.hero_cta_play}</Link>
+                ) : <span className="primary-button">{s.hero_cta_explore}</span>}
+                <Link href="#catalogo" className="ghost-button">{s.hero_cta_new} <span>↘</span></Link>
+              </div>
             </div>
-          </div>
-          <div className="hero-index">01 <span>/</span> 04</div>
-        </section>
+            <div className="hero-index">01 <span>/</span> 04</div>
+          </section>
+        )}
 
         <section id="categorias" className="category-strip">
           <div>
@@ -79,36 +118,7 @@ export default async function HomePage() {
           title={s.trending_title}
         />
 
-        <section id="catalogo" className="catalog-section">
-          <div className="section-heading">
-            <div><p className="section-kicker">{s.catalog_kicker}</p><h2>{s.catalog_title_line1} <em>{s.catalog_title_emphasis}</em></h2></div>
-            <Link href="#catalogo" className="view-all">{s.catalog_view_all} <span>→</span></Link>
-          </div>
-          <div className="catalog-grid">
-            {videos.map((video, index) => (
-              <Link key={video.id} href={`/video/${video.slug}`} className={`video-card ${index === 0 ? "featured-card" : ""}`}>
-                <div className="thumbnail-wrap">
-                  {video.thumbnail ? <img src={video.thumbnail} alt={video.title} /> : <div className="no-thumbnail">{s.brand_prefix}{s.brand_suffix}</div>}
-                  <span className="play-badge">▶</span>
-                  {video.duration && <span className="duration">{video.duration}</span>}
-                </div>
-                <div className="video-meta">
-                  <div>
-                    <p className="video-category">{video.categories[0]?.name ?? "General"}</p>
-                    <h3>{video.title}</h3>
-                    {video.studio && <p className="video-studio">{video.studio}</p>}
-                  </div>
-                  <span className="card-arrow">↗</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-          {videos.length === 0 && (
-            <p className="empty-state">
-              {s.catalog_empty_state} <Link href="/admin">/admin</Link>.
-            </p>
-          )}
-        </section>
+        {heroEnabled && catalogSection}
 
         <footer className="footer">
           <span>{s.footer_copyright}</span>

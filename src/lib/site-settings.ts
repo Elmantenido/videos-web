@@ -1,8 +1,16 @@
 import { prisma } from "@/lib/prisma";
 
+export type SettingField = {
+  key: string;
+  label: string;
+  default: string;
+  multiline?: boolean;
+  type?: "checkbox";
+};
+
 export const SETTING_GROUPS: {
   title: string;
-  fields: { key: string; label: string; default: string; multiline?: boolean }[];
+  fields: SettingField[];
 }[] = [
   {
     title: "Encabezado",
@@ -17,6 +25,12 @@ export const SETTING_GROUPS: {
   {
     title: "Hero (portada)",
     fields: [
+      {
+        key: "hero_enabled",
+        label: "Mostrar el Hero en la página principal",
+        default: "true",
+        type: "checkbox",
+      },
       { key: "hero_eyebrow", label: "Texto pequeño superior", default: "This week's picks" },
       { key: "hero_title_line1", label: "Título, línea 1", default: "Stories that" },
       { key: "hero_title_emphasis", label: "Título, palabra resaltada", default: "deserve" },
@@ -73,7 +87,7 @@ export const SETTING_GROUPS: {
   },
 ];
 
-export const SEO_FIELDS: { key: string; label: string; default: string; multiline?: boolean }[] = [
+export const SEO_FIELDS: SettingField[] = [
   { key: "seo_site_title", label: "Título del sitio (meta title)", default: "NOVAFLIX — Video Catalog" },
   {
     key: "seo_meta_description",

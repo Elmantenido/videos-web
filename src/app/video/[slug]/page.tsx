@@ -4,6 +4,8 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { isEmbedUrl, sanitizeEmbedCode } from "@/lib/embed";
 import { recordView } from "@/lib/views";
+import { getSiteSettings } from "@/lib/site-settings";
+import SiteHeader from "@/components/SiteHeader";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -37,6 +39,7 @@ export default async function VideoPage({ params }: Props) {
   if (!video) notFound();
 
   await recordView(video.id);
+  const s = await getSiteSettings();
 
   const categoryIds = video.categories.map((c) => c.id);
 
@@ -62,7 +65,9 @@ export default async function VideoPage({ params }: Props) {
   };
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
+    <main>
+      <SiteHeader brandPrefix={s.brand_prefix} brandSuffix={s.brand_suffix} />
+      <div className="mx-auto max-w-6xl px-4 py-8">
       <Link href="/" className="text-sm text-gray-500 hover:underline">
         ← Back
       </Link>
@@ -134,6 +139,7 @@ export default async function VideoPage({ params }: Props) {
             ))}
           </div>
         </aside>
+      </div>
       </div>
 
       <script

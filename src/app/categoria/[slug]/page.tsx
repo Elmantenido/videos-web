@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
+import { getSiteSettings } from "@/lib/site-settings";
+import SiteHeader from "@/components/SiteHeader";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -17,13 +19,18 @@ export default async function CategoryPage({ params }: Props) {
   const category = await prisma.category.findUnique({ where: { slug } });
   if (!category) notFound();
 
-  const videos = await prisma.video.findMany({
-    where: { categories: { some: { id: category.id } }, published: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const [videos, s] = await Promise.all([
+    prisma.video.findMany({
+      where: { categories: { some: { id: category.id } }, published: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    getSiteSettings(),
+  ]);
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-8">
+    <main>
+      <SiteHeader brandPrefix={s.brand_prefix} brandSuffix={s.brand_suffix} />
+      <div className="mx-auto max-w-7xl px-4 py-8">
       <Link href="/" className="text-sm text-gray-500 hover:underline">
         ← All categories
       </Link>
@@ -58,6 +65,7 @@ export default async function CategoryPage({ params }: Props) {
           No videos in this category yet.
         </p>
       )}
+      </div>
     </main>
   );
 }
