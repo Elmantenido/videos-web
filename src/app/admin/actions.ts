@@ -155,6 +155,13 @@ export async function deleteVideo(videoId: number) {
   revalidatePath("/admin");
 }
 
+export async function deleteCategory(categoryId: number) {
+  await requireAuth();
+  await prisma.category.delete({ where: { id: categoryId } });
+  revalidatePath("/");
+  revalidatePath("/admin/categories");
+}
+
 export async function updateSiteSettings(formData: FormData) {
   await requireAuth();
 
