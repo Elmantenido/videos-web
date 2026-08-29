@@ -102,19 +102,6 @@ export default async function VideoPage({ params }: Props) {
           {video.description && (
             <p className="mt-3 text-gray-700">{video.description}</p>
           )}
-          {previewImages.length > 0 && (
-            <div className="mt-4 grid grid-cols-5 gap-1.5">
-              {previewImages.map((src) => (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={src}
-                  src={src}
-                  alt=""
-                  className="aspect-video w-full rounded object-cover"
-                />
-              ))}
-            </div>
-          )}
           <ReportProblemButton videoId={video.id} />
         </div>
 
@@ -145,6 +132,20 @@ export default async function VideoPage({ params }: Props) {
           </div>
         </aside>
       </div>
+
+      {previewImages.length > 0 && (
+        <div className="mt-8 grid grid-cols-[repeat(auto-fill,minmax(min(450px,100%),450px))] gap-3">
+          {previewImages.map((src) => (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={src}
+              src={src}
+              alt=""
+              className="aspect-[9/10] w-full rounded object-cover"
+            />
+          ))}
+        </div>
+      )}
       </div>
 
       <script
