@@ -45,7 +45,7 @@ export default async function HomePage() {
         initialVideos={randomVideos}
         brandPrefix={s.brand_prefix}
         brandSuffix={s.brand_suffix}
-        pageSize={CAROUSEL_PAGE_SIZE}
+        visibleCount={CAROUSEL_PAGE_SIZE}
       />
     </section>
   );
@@ -61,7 +61,7 @@ export default async function HomePage() {
         initialVideos={latestVideos}
         brandPrefix={s.brand_prefix}
         brandSuffix={s.brand_suffix}
-        pageSize={CAROUSEL_PAGE_SIZE}
+        visibleCount={CAROUSEL_PAGE_SIZE}
       />
       {totalVideos === 0 && (
         <p className="empty-state">

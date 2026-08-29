@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 export type CarouselVideo = {
@@ -17,7 +17,7 @@ type Props = {
   initialVideos: CarouselVideo[];
   brandPrefix: string;
   brandSuffix: string;
-  pageSize?: number;
+  visibleCount?: number;
 };
 
 export default function VideoCarousel({
@@ -25,62 +25,73 @@ export default function VideoCarousel({
   initialVideos,
   brandPrefix,
   brandSuffix,
-  pageSize = 5,
+  visibleCount = 5,
 }: Props) {
-  const [pages, setPages] = useState<CarouselVideo[][]>([initialVideos]);
-  const [pageIndex, setPageIndex] = useState(0);
+  const [videos, setVideos] = useState<CarouselVideo[]>(initialVideos);
+  const [startIndex, setStartIndex] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [exhausted, setExhausted] = useState(initialVideos.length < pageSize);
+  const [exhausted, setExhausted] = useState(initialVideos.length < visibleCount);
+  const [stepPx, setStepPx] = useState(0);
+  const trackRef = useRef<HTMLDivElement>(null);
 
-  const seenIds = useMemo(() => pages.flat().map((v) => v.id), [pages]);
-
-  async function goNext() {
-    if (pageIndex < pages.length - 1) {
-      setPageIndex((i) => i + 1);
-      return;
+  useEffect(() => {
+    function measure() {
+      const track = trackRef.current;
+      const firstCard = track?.firstElementChild as HTMLElement | undefined;
+      if (!track || !firstCard) return;
+      const gap = parseFloat(getComputedStyle(track).columnGap || "0");
+      setStepPx(firstCard.getBoundingClientRect().width + gap);
     }
-    if (exhausted || loading) return;
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [videos.length]);
 
+  async function fetchMore() {
     setLoading(true);
     try {
-      let nextVideos: CarouselVideo[] = [];
+      let more: CarouselVideo[] = [];
       if (mode === "latest") {
-        const lastPage = pages[pages.length - 1];
-        const cursor = lastPage[lastPage.length - 1]?.id;
+        const cursor = videos[videos.length - 1]?.id;
         const res = await fetch(
-          `/api/videos?take=${pageSize}${cursor ? `&cursor=${cursor}` : ""}`
+          `/api/videos?take=${visibleCount}${cursor ? `&cursor=${cursor}` : ""}`
         );
         const data = await res.json();
-        nextVideos = data.videos ?? [];
+        more = data.videos ?? [];
       } else {
+        const excludeIds = videos.map((v) => v.id).join(",");
         const res = await fetch(
-          `/api/random?take=${pageSize}&excludeIds=${seenIds.join(",")}`
+          `/api/random?take=${visibleCount}&excludeIds=${excludeIds}`
         );
         const data = await res.json();
-        nextVideos = data.videos ?? [];
+        more = data.videos ?? [];
       }
-
-      if (nextVideos.length === 0) {
-        setExhausted(true);
-      } else {
-        setPages((prev) => [...prev, nextVideos]);
-        setPageIndex((i) => i + 1);
-        if (nextVideos.length < pageSize) setExhausted(true);
-      }
+      if (more.length < visibleCount) setExhausted(true);
+      if (more.length > 0) setVideos((prev) => [...prev, ...more]);
     } finally {
       setLoading(false);
     }
   }
 
-  function goPrev() {
-    setPageIndex((i) => Math.max(0, i - 1));
+  async function goNext() {
+    if (loading) return;
+    const nextStart = startIndex + 1;
+    if (nextStart + visibleCount > videos.length && exhausted) return;
+
+    setStartIndex(nextStart);
+    if (nextStart + visibleCount >= videos.length && !exhausted) {
+      await fetchMore();
+    }
   }
 
-  const current = pages[pageIndex] ?? [];
-  const canGoPrev = pageIndex > 0;
-  const canGoNext = pageIndex < pages.length - 1 || !exhausted;
+  function goPrev() {
+    setStartIndex((i) => Math.max(0, i - 1));
+  }
 
-  if (current.length === 0) return null;
+  const canGoPrev = startIndex > 0;
+  const canGoNext = !(exhausted && startIndex + visibleCount >= videos.length);
+
+  if (videos.length === 0) return null;
 
   return (
     <div className="carousel">
@@ -94,28 +105,38 @@ export default function VideoCarousel({
         ‹
       </button>
 
-      <div className="catalog-grid">
-        {current.map((video) => (
-          <Link key={video.id} href={`/video/${video.slug}`} className="video-card">
-            <div className="thumbnail-wrap">
-              {video.thumbnail ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={video.thumbnail} alt={video.title} />
-              ) : (
-                <div className="no-thumbnail">{brandPrefix}{brandSuffix}</div>
-              )}
-              <span className="play-badge">▶</span>
-              {video.duration && <span className="duration">{video.duration}</span>}
-            </div>
-            <div className="video-meta">
-              <div>
-                <h3>{video.title}</h3>
-                <p className="video-views">{video.views.toLocaleString()} views</p>
+      <div className="carousel-viewport">
+        <div
+          className="carousel-track"
+          ref={trackRef}
+          style={{ transform: `translateX(-${startIndex * stepPx}px)` }}
+        >
+          {videos.map((video) => (
+            <Link
+              key={video.id}
+              href={`/video/${video.slug}`}
+              className="video-card carousel-item"
+            >
+              <div className="thumbnail-wrap">
+                {video.thumbnail ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={video.thumbnail} alt={video.title} />
+                ) : (
+                  <div className="no-thumbnail">{brandPrefix}{brandSuffix}</div>
+                )}
+                <span className="play-badge">▶</span>
+                {video.duration && <span className="duration">{video.duration}</span>}
               </div>
-              <span className="card-arrow">↗</span>
-            </div>
-          </Link>
-        ))}
+              <div className="video-meta">
+                <div>
+                  <h3>{video.title}</h3>
+                  <p className="video-views">{video.views.toLocaleString()} views</p>
+                </div>
+                <span className="card-arrow">↗</span>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
       <button
