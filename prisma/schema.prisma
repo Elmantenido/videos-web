@@ -39,6 +39,20 @@ model Video {
   categories  Category[]
   tags        Tag[]
   viewEvents  VideoView[]
+  reports     Report[]
+}
+
+model Report {
+  id           Int      @id @default(autoincrement())
+  videoId      Int
+  video        Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  message      String
+  contactEmail String?
+  diagnostics  String?
+  resolved     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 model VideoView {

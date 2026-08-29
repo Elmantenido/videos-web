@@ -186,6 +186,18 @@ export async function deleteCategory(categoryId: number) {
   revalidatePath("/admin/categories");
 }
 
+export async function resolveReport(reportId: number) {
+  await requireAuth();
+  await prisma.report.update({ where: { id: reportId }, data: { resolved: true } });
+  revalidatePath("/admin/reports");
+}
+
+export async function deleteReport(reportId: number) {
+  await requireAuth();
+  await prisma.report.delete({ where: { id: reportId } });
+  revalidatePath("/admin/reports");
+}
+
 export async function updateSiteSettings(formData: FormData) {
   await requireAuth();
 

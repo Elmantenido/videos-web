@@ -7,6 +7,7 @@ import { extractPreviewImages } from "@/lib/preview";
 import { getSiteSettings } from "@/lib/site-settings";
 import SiteHeader from "@/components/SiteHeader";
 import VideoPlayer from "@/components/VideoPlayer";
+import ReportProblemButton from "@/components/ReportProblemButton";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -126,6 +127,7 @@ export default async function VideoPage({ params }: Props) {
               ))}
             </div>
           )}
+          <ReportProblemButton videoId={video.id} />
         </div>
 
         <aside>
