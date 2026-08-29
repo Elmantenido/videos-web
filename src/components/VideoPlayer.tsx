@@ -1,40 +1,49 @@
 "use client";
 
 import { useState } from "react";
-import { isEmbedUrl, sanitizeEmbedCode } from "@/lib/embed";
 
 type Props = {
   videoId: number;
-  embedUrl: string;
   thumbnail: string | null;
   title: string;
 };
 
-export default function VideoPlayer({ videoId, embedUrl, thumbnail, title }: Props) {
-  const [playing, setPlaying] = useState(false);
+type Source = { isHtml: boolean; content: string };
 
-  function handlePlay() {
-    setPlaying(true);
-    fetch("/api/videos/play", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ videoId }),
-    }).catch(() => {});
+export default function VideoPlayer({ videoId, thumbnail, title }: Props) {
+  const [loading, setLoading] = useState(false);
+  const [source, setSource] = useState<Source | null>(null);
+
+  async function handlePlay() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/videos/play", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ videoId }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSource({ isHtml: data.isHtml, content: atob(data.payload) });
+      }
+    } finally {
+      setLoading(false);
+    }
   }
 
-  if (playing) {
-    return isEmbedUrl(embedUrl) ? (
+  if (source) {
+    return source.isHtml ? (
+      <div
+        className="h-full w-full"
+        dangerouslySetInnerHTML={{ __html: source.content }}
+      />
+    ) : (
       <iframe
-        src={embedUrl}
+        src={source.content}
         title={title}
         className="h-full w-full"
         allow="autoplay; encrypted-media; picture-in-picture"
         allowFullScreen
-      />
-    ) : (
-      <div
-        className="h-full w-full"
-        dangerouslySetInnerHTML={{ __html: sanitizeEmbedCode(embedUrl) }}
       />
     );
   }
@@ -43,6 +52,7 @@ export default function VideoPlayer({ videoId, embedUrl, thumbnail, title }: Pro
     <button
       type="button"
       onClick={handlePlay}
+      disabled={loading}
       aria-label={`Play ${title}`}
       className="group relative h-full w-full cursor-pointer border-0 bg-black p-0"
     >
@@ -52,7 +62,7 @@ export default function VideoPlayer({ videoId, embedUrl, thumbnail, title }: Pro
       )}
       <span className="absolute inset-0 flex items-center justify-center bg-black/30 transition group-hover:bg-black/40">
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-2xl text-black">
-          ▶
+          {loading ? "…" : "▶"}
         </span>
       </span>
     </button>

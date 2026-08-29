@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { slugify } from "@/lib/slugify";
+import { extractPreviewImages } from "@/lib/preview";
 
 type Category = { id: number; name: string };
 
@@ -25,15 +26,6 @@ type Props = {
   };
 };
 
-function extractImageUrls(html: string): string[] {
-  if (typeof window === "undefined" || !html.trim()) return [];
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  const urls = Array.from(doc.querySelectorAll("img"))
-    .map((img) => img.getAttribute("src") || img.getAttribute("data-src") || "")
-    .filter(Boolean);
-  return Array.from(new Set(urls));
-}
-
 export default function VideoForm({ action, submitLabel, categories, defaultValues }: Props) {
   const [slug, setSlug] = useState(defaultValues?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(Boolean(defaultValues?.slug));
@@ -41,7 +33,7 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
   const [backgroundImage, setBackgroundImage] = useState(defaultValues?.backgroundImage ?? "");
   const [previewHtml, setPreviewHtml] = useState(defaultValues?.previewHtml ?? "");
   const [galleryImages, setGalleryImages] = useState<string[]>(() =>
-    extractImageUrls(defaultValues?.previewHtml ?? "")
+    extractPreviewImages(defaultValues?.previewHtml ?? "")
   );
 
   return (
@@ -118,25 +110,32 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
         />
         <button
           type="button"
-          onClick={() => setGalleryImages(extractImageUrls(previewHtml))}
+          onClick={() => setGalleryImages(extractPreviewImages(previewHtml))}
           className="mt-2 rounded border px-3 py-1.5 text-sm hover:bg-gray-50"
         >
           Cargar imágenes de la vista previa
         </button>
 
+        {previewHtml.trim() && galleryImages.length === 0 && (
+          <p className="mt-2 text-xs text-amber-600">
+            No se encontraron imágenes en ese HTML. Si usa carga diferida con un
+            atributo distinto a src/data-src, dime cuál para agregarlo.
+          </p>
+        )}
+
         {galleryImages.length > 0 && (
           <div className="mt-3">
             <p className="text-xs font-medium text-gray-500">
-              Elige una imagen como miniatura del video:
+              Elige una imagen para el reproductor (antes de dar play):
             </p>
             <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
               {galleryImages.map((src) => (
                 <button
                   key={src}
                   type="button"
-                  onClick={() => setThumbnail(src)}
+                  onClick={() => setBackgroundImage(src)}
                   className={`aspect-video overflow-hidden rounded border-2 ${
-                    thumbnail === src ? "border-black" : "border-transparent"
+                    backgroundImage === src ? "border-black" : "border-transparent"
                   }`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -149,7 +148,7 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
       </div>
 
       <label className="text-sm font-medium">
-        URL de la imagen/miniatura (portada)
+        URL de la miniatura (se usa en las tarjetas: Last Videos, Random, Trending, categorías)
         <input
           type="url"
           name="thumbnail"
@@ -160,7 +159,8 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
       </label>
 
       <label className="text-sm font-medium">
-        URL de la imagen de fondo (solo en la página de este video, distinta de la portada)
+        URL de la imagen del reproductor (se ve dentro del reproductor de este
+        video antes de darle play; puede ser distinta de la miniatura)
         <input
           type="url"
           name="backgroundImage"

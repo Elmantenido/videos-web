@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { isEmbedUrl } from "@/lib/embed";
 import { extractPreviewImages } from "@/lib/preview";
 import { getSiteSettings } from "@/lib/site-settings";
 import SiteHeader from "@/components/SiteHeader";
@@ -63,20 +62,10 @@ export default async function VideoPage({ params }: Props) {
     description: video.description ?? video.title,
     thumbnailUrl: video.thumbnail ?? undefined,
     uploadDate: video.createdAt.toISOString(),
-    ...(isEmbedUrl(video.embedUrl) ? { embedUrl: video.embedUrl } : {}),
   };
 
   return (
-    <main className="relative">
-      {video.backgroundImage && (
-        <div
-          className="absolute inset-x-0 top-0 h-96 bg-cover bg-center"
-          style={{ backgroundImage: `url(${video.backgroundImage})` }}
-        >
-          <div className="h-full w-full bg-gradient-to-b from-black/50 via-white/70 to-white" />
-        </div>
-      )}
-      <div className="relative">
+    <main>
       <SiteHeader brandPrefix={s.brand_prefix} brandSuffix={s.brand_suffix} />
       <div className="mx-auto max-w-6xl px-4 py-8">
       <Link href="/" className="text-sm text-gray-500 hover:underline">
@@ -88,8 +77,7 @@ export default async function VideoPage({ params }: Props) {
           <div className="aspect-video w-full overflow-hidden rounded-lg bg-black [&_iframe]:h-full [&_iframe]:w-full [&_video]:h-full [&_video]:w-full">
             <VideoPlayer
               videoId={video.id}
-              embedUrl={video.embedUrl}
-              thumbnail={video.thumbnail}
+              thumbnail={video.backgroundImage || video.thumbnail}
               title={video.title}
             />
           </div>
@@ -156,7 +144,6 @@ export default async function VideoPage({ params }: Props) {
             ))}
           </div>
         </aside>
-      </div>
       </div>
       </div>
 
