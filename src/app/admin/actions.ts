@@ -271,7 +271,13 @@ function extractLabeledSection(html: string, label: string): string | null {
     new RegExp(`<h2[^>]*>\\s*${escaped}\\s*<\\/h2>([\\s\\S]*?)(?=<h2[^>]*>|$)`, "i")
   );
   if (!match) return null;
-  const block = match[1];
+  // Drop the "show more"/"mostrar más" toggle button — it's UI chrome, not
+  // part of the section's actual content, and would otherwise get appended
+  // to the extracted text.
+  const block = match[1].replace(
+    /<button\b[^>]*data-expand-button[^>]*>[\s\S]*?<\/button>/gi,
+    ""
+  );
 
   const pillMatches = Array.from(
     block.matchAll(/<span[^>]*class=["'][^"']*break-words[^"']*["'][^>]*>([^<]*)<\/span>/gi)
