@@ -331,11 +331,21 @@ function extractDuration(html: string): string | null {
   return match ? `${match[1]}:00` : null;
 }
 
+function extractPosterImageUrlByAlt(html: string): string | null {
+  // The actual "before play" poster is the specific <img alt="Video poster">
+  // rendered inside the play button. Other unrelated images can also point at
+  // /images/posters/... elsewhere on the page (e.g. related-video cards), so
+  // this specific marker is far more reliable than matching on the path.
+  const tag = html.match(/<img\b[^>]*\balt=["']Video poster["'][^>]*>/i)?.[0];
+  if (!tag) return null;
+  const src = tag.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+  return src ? src[1] : null;
+}
+
 function extractPosterImageUrl(html: string): string | null {
-  // Some posters are lazy-loaded — the real URL can live in a data-* attribute
-  // while src itself is still a blank/placeholder image at that point, so the
-  // literal-src-only check used to skip the actual first poster and land on
-  // a later <img> that happened to have a real src.
+  // Fallback for sources without the "Video poster" alt marker: some posters
+  // are lazy-loaded, so the real URL can live in a data-* attribute while src
+  // itself is still a blank/placeholder image at that point.
   const srcAttrs = [
     "data-src",
     "data-original",
@@ -414,7 +424,7 @@ export async function extractFromUrl(url: string) {
       description,
       embedUrl: "",
       thumbnail,
-      backgroundImage: extractPosterImageUrl(html),
+      backgroundImage: extractPosterImageUrlByAlt(html) ?? extractPosterImageUrl(html),
       duration: extractDuration(html),
       studio:
         extractStudioByLabel(html) ??
