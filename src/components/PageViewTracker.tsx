@@ -7,7 +7,7 @@ export default function PageViewTracker() {
   const pathname = usePathname();
 
   useEffect(() => {
-    fetch("/api/track/pageview", {
+    fetch("/api/visit/hit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ path: pathname }),

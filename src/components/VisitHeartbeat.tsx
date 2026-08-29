@@ -8,7 +8,7 @@ export default function VisitHeartbeat() {
   useEffect(() => {
     function ping() {
       if (document.visibilityState === "visible") {
-        fetch("/api/track/ping", { method: "POST" }).catch(() => {});
+        fetch("/api/visit/ping", { method: "POST" }).catch(() => {});
       }
     }
 
