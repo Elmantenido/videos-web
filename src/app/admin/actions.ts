@@ -285,6 +285,15 @@ function extractLabeledSection(html: string, label: string): string | null {
   return text || null;
 }
 
+function extractStudioByLabel(html: string): string | null {
+  const idx = html.search(/Studio/i);
+  if (idx === -1) return null;
+  const match = html
+    .slice(idx)
+    .match(/<strong[^>]*class=["'][^"']*font-medium text-primary[^"']*["'][^>]*>([^<]*)<\/strong>/i);
+  return match ? decodeHtmlEntities(match[1]) : null;
+}
+
 function extractPosterImageUrl(html: string): string | null {
   const imgTags = html.match(/<img\b[^>]*>/gi) ?? [];
   for (const tag of imgTags) {
@@ -355,7 +364,10 @@ export async function extractFromUrl(url: string) {
       thumbnail,
       backgroundImage: extractPosterImageUrl(html),
       duration: null as string | null,
-      studio: extractLabeledSection(html, "Studio") ?? extractStudio(html),
+      studio:
+        extractStudioByLabel(html) ??
+        extractLabeledSection(html, "Studio") ??
+        extractStudio(html),
       previewHtml: previewImages.map((src) => `<img src="${src}">`).join(""),
       categoryNames: extractCategoryNames(html),
       tagNames: [] as string[],
