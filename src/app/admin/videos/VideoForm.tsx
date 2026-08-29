@@ -82,7 +82,7 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
               (c) => c.name.trim().toLowerCase() === name.toLowerCase()
             );
             if (existing) matchedIds.push(existing.id);
-            else newNames.push(name);
+            else newNames.push(name.toUpperCase());
           }
           if (matchedIds.length) {
             setSelectedCategoryIds((prev) => Array.from(new Set([...prev, ...matchedIds])));

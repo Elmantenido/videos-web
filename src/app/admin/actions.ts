@@ -233,19 +233,29 @@ function extractJsonLd(html: string): Record<string, unknown> | null {
 }
 
 function extractCategoryNames(html: string): string[] {
-  // Different source sites link categories differently (e.g. "/categoria/x"
-  // vs. "/browse/tags/category/x") — collect from every known pattern.
-  const patterns = [
-    /<a[^>]*href=["']\/categoria\/[^"']*["'][^>]*>([^<]*)<\/a>/gi,
-    /<a[^>]*href=["']\/browse\/tags\/category[^"']*["'][^>]*>([^<]*)<\/a>/gi,
-  ];
   const names: string[] = [];
-  for (const pattern of patterns) {
-    for (const match of html.matchAll(pattern)) {
-      const name = decodeHtmlEntities(match[1]);
-      if (name) names.push(name);
-    }
+
+  // Some sources link categories as plain "/categoria/x" anchors.
+  for (const match of html.matchAll(
+    /<a[^>]*href=["']\/categoria\/[^"']*["'][^>]*>([^<]*)<\/a>/gi
+  )) {
+    const name = decodeHtmlEntities(match[1]);
+    if (name) names.push(name);
   }
+
+  // Others render categories as "badge" chips linking to /browse/tags/<slug>,
+  // e.g. <a href="/browse/tags/comedy" class="badge badge-outline ...">COMEDY</a>.
+  // The category name is the link's text, not the slug in the href — the
+  // href+badge-class combo is distinctive enough on its own, no need to also
+  // scope this to a particular wrapping container.
+  for (const match of html.matchAll(/<a([^>]*)>([^<]*)<\/a>/gi)) {
+    const [, attrs, text] = match;
+    if (!/href=["']\/browse\/tags\//i.test(attrs)) continue;
+    if (!/class=["'][^"']*\bbadge\b/i.test(attrs)) continue;
+    const name = decodeHtmlEntities(text);
+    if (name) names.push(name);
+  }
+
   return Array.from(new Set(names));
 }
 
