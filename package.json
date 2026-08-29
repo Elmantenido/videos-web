@@ -7,6 +7,7 @@
   },
   "scripts": {
     "seed": "prisma db seed",
+    "clean-slugs": "tsx prisma/clean-slugs.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

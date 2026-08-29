@@ -31,6 +31,7 @@ export default async function EditVideoPage({ params }: Props) {
         categories={categories}
         defaultValues={{
           title: video.title,
+          slug: video.slug,
           description: video.description,
           embedUrl: video.embedUrl,
           thumbnail: video.thumbnail,

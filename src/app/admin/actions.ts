@@ -74,6 +74,17 @@ async function connectOrCreateNamed(
   return rows.map((r) => ({ id: r.id }));
 }
 
+async function ensureUniqueSlug(base: string, excludeVideoId?: number) {
+  let slug = base;
+  let attempt = 2;
+  while (true) {
+    const existing = await prisma.video.findUnique({ where: { slug } });
+    if (!existing || existing.id === excludeVideoId) return slug;
+    slug = `${base}-${attempt}`;
+    attempt++;
+  }
+}
+
 async function resolveCategoryConnections(formData: FormData) {
   const selectedIds = formData
     .getAll("categoryIds")
@@ -99,10 +110,13 @@ export async function createVideo(formData: FormData) {
   const categories = await resolveCategoryConnections(formData);
   const tags = await connectOrCreateNamed("tag", parseNames(formData.get("tagNames")));
 
+  const requestedSlug = String(formData.get("slug") ?? "").trim();
+  const slug = await ensureUniqueSlug(slugify(requestedSlug || title));
+
   await prisma.video.create({
     data: {
       title,
-      slug: `${slugify(title)}-${Date.now().toString(36)}`,
+      slug,
       description: String(formData.get("description") ?? "") || null,
       embedUrl,
       thumbnail: String(formData.get("thumbnail") ?? "") || null,
@@ -129,10 +143,14 @@ export async function updateVideo(videoId: number, formData: FormData) {
   const categories = await resolveCategoryConnections(formData);
   const tags = await connectOrCreateNamed("tag", parseNames(formData.get("tagNames")));
 
+  const requestedSlug = String(formData.get("slug") ?? "").trim();
+  const slug = await ensureUniqueSlug(slugify(requestedSlug || title), videoId);
+
   await prisma.video.update({
     where: { id: videoId },
     data: {
       title,
+      slug,
       description: String(formData.get("description") ?? "") || null,
       embedUrl,
       thumbnail: String(formData.get("thumbnail") ?? "") || null,

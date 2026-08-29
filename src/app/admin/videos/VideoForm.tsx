@@ -1,5 +1,8 @@
 "use client";
 
+import { useState } from "react";
+import { slugify } from "@/lib/slugify";
+
 type Category = { id: number; name: string };
 
 type Props = {
@@ -8,6 +11,7 @@ type Props = {
   categories: Category[];
   defaultValues?: {
     title: string;
+    slug: string;
     description: string | null;
     embedUrl: string;
     thumbnail: string | null;
@@ -20,6 +24,9 @@ type Props = {
 };
 
 export default function VideoForm({ action, submitLabel, categories, defaultValues }: Props) {
+  const [slug, setSlug] = useState(defaultValues?.slug ?? "");
+  const [slugTouched, setSlugTouched] = useState(Boolean(defaultValues?.slug));
+
   return (
     <form action={action} className="flex flex-col gap-3">
       <label className="text-sm font-medium">
@@ -28,9 +35,30 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
           type="text"
           name="title"
           defaultValue={defaultValues?.title}
+          onChange={(e) => {
+            if (!slugTouched) setSlug(slugify(e.target.value));
+          }}
           className="mt-1 w-full rounded border px-3 py-2"
           required
         />
+      </label>
+
+      <label className="text-sm font-medium">
+        URL del video (slug)
+        <div className="mt-1 flex items-center gap-1 rounded border px-3 py-2 text-sm text-gray-500">
+          <span>/video/</span>
+          <input
+            type="text"
+            name="slug"
+            value={slug}
+            onChange={(e) => {
+              setSlugTouched(true);
+              setSlug(slugify(e.target.value));
+            }}
+            className="flex-1 border-0 p-0 text-black outline-none"
+            placeholder="se genera del título si lo dejas vacío"
+          />
+        </div>
       </label>
 
       <label className="text-sm font-medium">
