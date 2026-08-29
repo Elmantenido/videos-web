@@ -92,3 +92,11 @@ model PageView {
 
   @@index([createdAt])
 }
+
+model SearchQuery {
+  id        Int      @id @default(autoincrement())
+  term      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

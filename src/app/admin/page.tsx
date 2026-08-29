@@ -69,6 +69,12 @@ export default async function AdminDashboard({ searchParams }: Props) {
             Reportes
           </Link>
           <Link
+            href="/admin/search"
+            className="rounded border px-3 py-2 text-sm hover:bg-gray-50"
+          >
+            Buscador
+          </Link>
+          <Link
             href="/admin/extraction"
             className="rounded border px-3 py-2 text-sm hover:bg-gray-50"
           >

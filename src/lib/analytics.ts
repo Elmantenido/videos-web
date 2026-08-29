@@ -88,3 +88,38 @@ export async function getLast30MinBuckets(): Promise<MinuteBucket[]> {
 
   return buckets;
 }
+
+export type DailySearchTerms = {
+  day: string;
+  total: number;
+  terms: { term: string; count: number }[];
+};
+
+export async function getSearchTermsByDay(from: Date, to: Date): Promise<DailySearchTerms[]> {
+  const rows = await prisma.searchQuery.findMany({
+    where: { createdAt: { gte: from, lte: to } },
+    select: { term: true, createdAt: true },
+  });
+
+  const byDay = new Map<string, Map<string, { term: string; count: number }>>();
+
+  for (const row of rows) {
+    const day = row.createdAt.toISOString().slice(0, 10);
+    const key = row.term.trim().toLowerCase();
+    if (!key) continue;
+
+    const dayTerms = byDay.get(day) ?? new Map();
+    byDay.set(day, dayTerms);
+
+    const existing = dayTerms.get(key);
+    if (existing) existing.count += 1;
+    else dayTerms.set(key, { term: row.term.trim(), count: 1 });
+  }
+
+  return Array.from(byDay.entries())
+    .sort(([a], [b]) => (a < b ? 1 : -1))
+    .map(([day, dayTerms]) => {
+      const terms = Array.from(dayTerms.values()).sort((a, b) => b.count - a.count);
+      return { day, terms, total: terms.reduce((sum, t) => sum + t.count, 0) };
+    });
+}

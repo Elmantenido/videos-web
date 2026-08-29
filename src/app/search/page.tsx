@@ -15,6 +15,10 @@ export default async function SearchPage({ searchParams }: Props) {
   const { q } = await searchParams;
   const query = (q ?? "").trim();
 
+  if (query) {
+    prisma.searchQuery.create({ data: { term: query.slice(0, 200) } }).catch(() => {});
+  }
+
   const [videos, s] = await Promise.all([
     query
       ? prisma.video.findMany({
