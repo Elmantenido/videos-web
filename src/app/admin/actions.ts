@@ -201,10 +201,16 @@ export async function deleteReport(reportId: number) {
 export async function updateSiteSettings(formData: FormData) {
   await requireAuth();
 
-  const knownFields = [...SETTING_GROUPS.flatMap((g) => g.fields), ...SEO_FIELDS];
+  // Each settings form only renders its own subset of fields (Textos del
+  // sitio vs. SEO). A hidden "formScope" input tells us which one, so a
+  // submission from one form never wipes out fields that belong to the
+  // other and simply weren't present in this particular FormData.
+  const scope = formData.get("formScope");
+  const fields =
+    scope === "seo" ? SEO_FIELDS : SETTING_GROUPS.flatMap((g) => g.fields);
 
   await Promise.all(
-    knownFields.map((field) => {
+    fields.map((field) => {
       const value =
         field.type === "checkbox"
           ? formData.get(field.key) === "on"

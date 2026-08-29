@@ -13,6 +13,7 @@ export default async function SiteSettingsPage() {
       <h1 className="mb-6 mt-2 text-2xl font-bold">Textos del sitio</h1>
 
       <form action={updateSiteSettings} className="flex flex-col gap-8">
+        <input type="hidden" name="formScope" value="settings" />
         {SETTING_GROUPS.map((group) => (
           <fieldset key={group.title} className="flex flex-col gap-3">
             <legend className="mb-1 text-sm font-semibold uppercase text-gray-500">

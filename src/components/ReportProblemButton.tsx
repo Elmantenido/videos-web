@@ -75,7 +75,7 @@ export default function ReportProblemButton({ videoId }: { videoId: number }) {
           >
             {status === "sent" ? (
               <div>
-                <h2 className="text-lg font-semibold">Thanks for the report</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Thanks for the report</h2>
                 <p className="mt-2 text-sm text-gray-600">
                   We&apos;ll take a look. You can close this window now.
                 </p>
@@ -88,9 +88,9 @@ export default function ReportProblemButton({ videoId }: { videoId: number }) {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                <h2 className="text-lg font-semibold">Report a problem</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Report a problem</h2>
 
-                <label className="text-sm font-medium">
+                <label className="text-sm font-medium text-gray-900">
                   What happened?
                   <textarea
                     value={message}
@@ -98,17 +98,17 @@ export default function ReportProblemButton({ videoId }: { videoId: number }) {
                     required
                     rows={4}
                     placeholder="Example: Player loads forever after preroll, video freezes at 01:42, audio plays but screen stays black."
-                    className="mt-1 w-full rounded border px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded border px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400"
                   />
                 </label>
 
-                <label className="text-sm font-medium">
+                <label className="text-sm font-medium text-gray-900">
                   Contact email <span className="font-normal text-gray-400">Optional</span>
                   <input
                     type="email"
                     value={contactEmail}
                     onChange={(e) => setContactEmail(e.target.value)}
-                    className="mt-1 w-full rounded border px-3 py-2 text-sm"
+                    className="mt-1 w-full rounded border px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400"
                   />
                 </label>
 

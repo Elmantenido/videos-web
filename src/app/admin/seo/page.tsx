@@ -17,6 +17,7 @@ export default async function SeoSettingsPage() {
       </p>
 
       <form action={updateSiteSettings} className="flex flex-col gap-4">
+        <input type="hidden" name="formScope" value="seo" />
         {SEO_FIELDS.map((field) => (
           <label key={field.key} className="text-sm font-medium">
             {field.label}
