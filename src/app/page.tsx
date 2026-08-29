@@ -81,7 +81,7 @@ export default async function HomePage() {
           </Link>
           <nav className="main-nav" aria-label="Main navigation">
             <Link className="active" href="/">{s.nav_home}</Link>
-            <Link href="#catalogo">{s.nav_explore}</Link>
+            <Link href="#categorias">{s.nav_explore}</Link>
             <Link href="#categorias">{s.nav_categories}</Link>
             <Link href="#trending">Trending</Link>
           </nav>
