@@ -321,6 +321,16 @@ function extractStudioByLabel(html: string): string | null {
   return match ? decodeHtmlEntities(match[1]) : null;
 }
 
+function extractDuration(html: string): string | null {
+  // e.g. <span class="badge badge-outline badge-xs ...">16 min</span> — the
+  // site only shows whole minutes, so we render it as MM:00 to match the
+  // MM:SS convention already used in the "Duración" field.
+  const match = html.match(
+    /<span[^>]*class=["'][^"']*\bbadge\b[^"']*["'][^>]*>\s*(\d+)\s*min\s*<\/span>/i
+  );
+  return match ? `${match[1]}:00` : null;
+}
+
 function extractPosterImageUrl(html: string): string | null {
   const imgTags = html.match(/<img\b[^>]*>/gi) ?? [];
   for (const tag of imgTags) {
@@ -390,7 +400,7 @@ export async function extractFromUrl(url: string) {
       embedUrl: "",
       thumbnail,
       backgroundImage: extractPosterImageUrl(html),
-      duration: null as string | null,
+      duration: extractDuration(html),
       studio:
         extractStudioByLabel(html) ??
         extractLabeledSection(html, "Studio") ??
