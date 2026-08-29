@@ -332,11 +332,13 @@ function extractDuration(html: string): string | null {
 }
 
 function extractPosterImageUrlByAlt(html: string): string | null {
-  // The actual "before play" poster is the specific <img alt="Video poster">
-  // rendered inside the play button. Other unrelated images can also point at
-  // /images/posters/... elsewhere on the page (e.g. related-video cards), so
-  // this specific marker is far more reliable than matching on the path.
-  const tag = html.match(/<img\b[^>]*\balt=["']Video poster["'][^>]*>/i)?.[0];
+  // alt="Video poster" alone isn't unique — related-video cards reuse the
+  // same alt text. The actual "before play" poster is also the page's LCP
+  // image, so it's eager-loaded / high fetch priority, unlike the (lazy)
+  // thumbnails in a related-videos grid. Require both to disambiguate.
+  const tag = html.match(
+    /<img\b(?=[^>]*\balt=["']Video poster["'])(?=[^>]*(?:\bloading=["']eager["']|\bfetchpriority=["']high["']))[^>]*>/i
+  )?.[0];
   if (!tag) return null;
   const src = tag.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
   return src ? src[1] : null;
