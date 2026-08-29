@@ -78,6 +78,13 @@ export const SETTING_GROUPS: {
     ],
   },
   {
+    title: "Random",
+    fields: [
+      { key: "random_kicker", label: "Texto pequeño superior", default: "Feeling lucky" },
+      { key: "random_title", label: "Título de la sección", default: "Random" },
+    ],
+  },
+  {
     title: "Pie de página",
     fields: [
       { key: "footer_copyright", label: "Texto de derechos", default: "© 2026 NOVAFLIX" },

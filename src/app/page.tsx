@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTrending } from "@/lib/views";
 import TrendingSection from "@/components/TrendingSection";
+import RandomSection from "@/components/RandomSection";
 import SearchBox from "@/components/SearchBox";
 
 export const revalidate = 60; // ISR: regenera esta página cada 60s
@@ -24,6 +25,15 @@ export default async function HomePage() {
   ]);
 
   const heroEnabled = s.hero_enabled !== "false";
+
+  const randomSection = (
+    <RandomSection
+      kicker={s.random_kicker}
+      title={s.random_title}
+      brandPrefix={s.brand_prefix}
+      brandSuffix={s.brand_suffix}
+    />
+  );
 
   const catalogSection = (
     <section id="catalogo" className="catalog-section">
@@ -77,7 +87,12 @@ export default async function HomePage() {
           </div>
         </header>
 
-        {!heroEnabled && catalogSection}
+        {!heroEnabled && (
+          <>
+            {catalogSection}
+            {randomSection}
+          </>
+        )}
 
         {heroEnabled && (
           <section className="hero" style={{ backgroundImage: `url(${videos[0]?.thumbnail ?? fallbackArtwork})` }}>
@@ -119,7 +134,12 @@ export default async function HomePage() {
           title={s.trending_title}
         />
 
-        {heroEnabled && catalogSection}
+        {heroEnabled && (
+          <>
+            {catalogSection}
+            {randomSection}
+          </>
+        )}
 
         <footer className="footer">
           <span>{s.footer_copyright}</span>
