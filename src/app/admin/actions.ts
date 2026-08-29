@@ -264,16 +264,24 @@ function extractPreviewImageUrls(html: string): string[] {
 
 function extractLabeledSection(html: string, label: string): string | null {
   const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Only a following <h2> ends the section — some sites render each value
+  // inside its own "pill" card (e.g. an <h3> per item), which must stay
+  // part of the section's content instead of being treated as a boundary.
   const match = html.match(
-    new RegExp(
-      `<h[1-6][^>]*>\\s*${escaped}\\s*<\\/h[1-6]>([\\s\\S]*?)(?=<h[1-6][^>]*>|$)`,
-      "i"
-    )
+    new RegExp(`<h2[^>]*>\\s*${escaped}\\s*<\\/h2>([\\s\\S]*?)(?=<h2[^>]*>|$)`, "i")
   );
   if (!match) return null;
-  const text = decodeHtmlEntities(
-    match[1].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")
+  const block = match[1];
+
+  const pillMatches = Array.from(
+    block.matchAll(/<span[^>]*class=["'][^"']*break-words[^"']*["'][^>]*>([^<]*)<\/span>/gi)
   );
+  if (pillMatches.length > 0) {
+    const names = pillMatches.map((m) => decodeHtmlEntities(m[1])).filter(Boolean);
+    return names.length ? names.join(", ") : null;
+  }
+
+  const text = decodeHtmlEntities(block.replace(/<[^>]+>/g, " ").replace(/\s+/g, " "));
   return text || null;
 }
 
