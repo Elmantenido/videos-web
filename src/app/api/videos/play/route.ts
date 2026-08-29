@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { isEmbedUrl, sanitizeEmbedCode } from "@/lib/embed";
 import { recordView } from "@/lib/views";
+import { signOwnVideoUrl, signVideoTagSources } from "@/lib/secure-link";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
@@ -22,7 +23,9 @@ export async function POST(req: NextRequest) {
   await recordView(videoId);
 
   const isHtml = !isEmbedUrl(video.embedUrl);
-  const raw = isHtml ? sanitizeEmbedCode(video.embedUrl) : video.embedUrl;
+  const raw = isHtml
+    ? signVideoTagSources(sanitizeEmbedCode(video.embedUrl))
+    : signOwnVideoUrl(video.embedUrl);
   const payload = Buffer.from(raw, "utf-8").toString("base64");
 
   return NextResponse.json({ isHtml, payload });
