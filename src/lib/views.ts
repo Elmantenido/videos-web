@@ -1,11 +1,21 @@
+import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { VISIT_COOKIE } from "@/lib/visit";
 
 export type TrendingRange = "today" | "week" | "month" | "all";
 
 export async function recordView(videoId: number) {
+  const store = await cookies();
+  const visitId = store.get(VISIT_COOKIE)?.value;
+
   await Promise.all([
     prisma.video.update({ where: { id: videoId }, data: { views: { increment: 1 } } }),
     prisma.videoView.create({ data: { videoId } }),
+    visitId
+      ? prisma.visit
+          .update({ where: { id: visitId }, data: { playsCount: { increment: 1 } } })
+          .catch(() => {})
+      : Promise.resolve(),
   ]);
 }
 

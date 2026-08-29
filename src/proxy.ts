@@ -1,19 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
+import { touchOrCreateVisit } from "@/lib/visit";
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
 };
 
-export function proxy(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (pathname === "/admin/login") return NextResponse.next();
 
-  const token = req.cookies.get(SESSION_COOKIE)?.value;
-  if (!verifySessionToken(token)) {
-    const loginUrl = new URL("/admin/login", req.url);
-    return NextResponse.redirect(loginUrl);
+  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+    const token = req.cookies.get(SESSION_COOKIE)?.value;
+    if (!verifySessionToken(token)) {
+      return NextResponse.redirect(new URL("/admin/login", req.url));
+    }
   }
 
-  return NextResponse.next();
+  const res = NextResponse.next();
+  await touchOrCreateVisit(req, res);
+  return res;
 }

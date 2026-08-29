@@ -52,3 +52,27 @@ model SiteSetting {
   key   String @id
   value String
 }
+
+model Visit {
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now())
+  lastSeenAt  DateTime   @default(now())
+  country     String?
+  landingPage String
+  referrer    String?
+  isAdmin     Boolean    @default(false)
+  playsCount  Int        @default(0)
+  pageViews   PageView[]
+
+  @@index([createdAt])
+}
+
+model PageView {
+  id        Int      @id @default(autoincrement())
+  visitId   String
+  visit     Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
+  path      String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
