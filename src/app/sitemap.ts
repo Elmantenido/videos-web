@@ -1,6 +1,12 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 
+// Without this, Next.js treats sitemap.ts as fully static (Prisma calls
+// aren't a "request-time" signal the way fetch/cookies() are), so it gets
+// generated once at build time and frozen -- new videos/categories never
+// show up until the next deploy. Force it to run fresh on every request.
+export const dynamic = "force-dynamic";
+
 function siteUrl() {
   return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 }
