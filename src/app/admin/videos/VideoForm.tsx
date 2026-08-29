@@ -15,6 +15,7 @@ type Props = {
     description: string | null;
     embedUrl: string;
     thumbnail: string | null;
+    backgroundImage: string | null;
     duration: string | null;
     studio: string | null;
     previewHtml: string | null;
@@ -37,6 +38,7 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
   const [slug, setSlug] = useState(defaultValues?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(Boolean(defaultValues?.slug));
   const [thumbnail, setThumbnail] = useState(defaultValues?.thumbnail ?? "");
+  const [backgroundImage, setBackgroundImage] = useState(defaultValues?.backgroundImage ?? "");
   const [previewHtml, setPreviewHtml] = useState(defaultValues?.previewHtml ?? "");
   const [galleryImages, setGalleryImages] = useState<string[]>(() =>
     extractImageUrls(defaultValues?.previewHtml ?? "")
@@ -147,12 +149,23 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
       </div>
 
       <label className="text-sm font-medium">
-        URL de la imagen/miniatura
+        URL de la imagen/miniatura (portada)
         <input
           type="url"
           name="thumbnail"
           value={thumbnail}
           onChange={(e) => setThumbnail(e.target.value)}
+          className="mt-1 w-full rounded border px-3 py-2"
+        />
+      </label>
+
+      <label className="text-sm font-medium">
+        URL de la imagen de fondo (solo en la página de este video, distinta de la portada)
+        <input
+          type="url"
+          name="backgroundImage"
+          value={backgroundImage}
+          onChange={(e) => setBackgroundImage(e.target.value)}
           className="mt-1 w-full rounded border px-3 py-2"
         />
       </label>

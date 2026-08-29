@@ -28,6 +28,7 @@ model Video {
   description String?
   embedUrl    String
   thumbnail   String?
+  backgroundImage String?
   duration    String?
   studio      String?
   previewHtml String?

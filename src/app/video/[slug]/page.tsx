@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { isEmbedUrl, sanitizeEmbedCode } from "@/lib/embed";
+import { isEmbedUrl } from "@/lib/embed";
+import { extractPreviewImages } from "@/lib/preview";
 import { getSiteSettings } from "@/lib/site-settings";
 import SiteHeader from "@/components/SiteHeader";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -39,6 +40,7 @@ export default async function VideoPage({ params }: Props) {
   if (!video) notFound();
 
   const s = await getSiteSettings();
+  const previewImages = extractPreviewImages(video.previewHtml ?? "");
 
   const categoryIds = video.categories.map((c) => c.id);
 
@@ -64,7 +66,16 @@ export default async function VideoPage({ params }: Props) {
   };
 
   return (
-    <main>
+    <main className="relative">
+      {video.backgroundImage && (
+        <div
+          className="absolute inset-x-0 top-0 h-96 bg-cover bg-center"
+          style={{ backgroundImage: `url(${video.backgroundImage})` }}
+        >
+          <div className="h-full w-full bg-gradient-to-b from-black/50 via-white/70 to-white" />
+        </div>
+      )}
+      <div className="relative">
       <SiteHeader brandPrefix={s.brand_prefix} brandSuffix={s.brand_suffix} />
       <div className="mx-auto max-w-6xl px-4 py-8">
       <Link href="/" className="text-sm text-gray-500 hover:underline">
@@ -102,11 +113,18 @@ export default async function VideoPage({ params }: Props) {
           {video.description && (
             <p className="mt-3 text-gray-700">{video.description}</p>
           )}
-          {video.previewHtml && (
-            <div
-              className="mt-4"
-              dangerouslySetInnerHTML={{ __html: sanitizeEmbedCode(video.previewHtml) }}
-            />
+          {previewImages.length > 0 && (
+            <div className="mt-4 grid grid-cols-5 gap-1.5">
+              {previewImages.map((src) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  key={src}
+                  src={src}
+                  alt=""
+                  className="aspect-video w-full rounded object-cover"
+                />
+              ))}
+            </div>
           )}
         </div>
 
@@ -136,6 +154,7 @@ export default async function VideoPage({ params }: Props) {
             ))}
           </div>
         </aside>
+      </div>
       </div>
       </div>
 

@@ -35,6 +35,7 @@ export default async function EditVideoPage({ params }: Props) {
           description: video.description,
           embedUrl: video.embedUrl,
           thumbnail: video.thumbnail,
+          backgroundImage: video.backgroundImage,
           duration: video.duration,
           studio: video.studio,
           previewHtml: video.previewHtml,
