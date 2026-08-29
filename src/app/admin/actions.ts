@@ -332,11 +332,15 @@ function extractDuration(html: string): string | null {
 }
 
 function extractPosterImageUrlByAlt(html: string): string | null {
-  // alt="Video poster" alone isn't unique — related-video cards reuse the
-  // same alt text. The actual "before play" poster is also the page's LCP
-  // image, so it's eager-loaded / high fetch priority, unlike the (lazy)
-  // thumbnails in a related-videos grid. Require both to disambiguate.
-  const tag = html.match(
+  // Neither alt="Video poster" nor eager/high-priority loading is unique on
+  // its own — related-video cards can reuse the exact same player component,
+  // and thus the same poster markup, on their own thumbnail. The main
+  // player's wrapper id is unique and always precedes any related-videos
+  // section, so scope the search to everything from there onward.
+  const containerIdx = html.search(/id=["']HTVPlayerContainer["']/i);
+  const scope = containerIdx === -1 ? html : html.slice(containerIdx);
+
+  const tag = scope.match(
     /<img\b(?=[^>]*\balt=["']Video poster["'])(?=[^>]*(?:\bloading=["']eager["']|\bfetchpriority=["']high["']))[^>]*>/i
   )?.[0];
   if (!tag) return null;
