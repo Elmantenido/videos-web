@@ -17,15 +17,30 @@ type Props = {
     thumbnail: string | null;
     duration: string | null;
     studio: string | null;
+    previewHtml: string | null;
     published: boolean;
     categoryIds: number[];
     tagNames: string;
   };
 };
 
+function extractImageUrls(html: string): string[] {
+  if (typeof window === "undefined" || !html.trim()) return [];
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const urls = Array.from(doc.querySelectorAll("img"))
+    .map((img) => img.getAttribute("src") || img.getAttribute("data-src") || "")
+    .filter(Boolean);
+  return Array.from(new Set(urls));
+}
+
 export default function VideoForm({ action, submitLabel, categories, defaultValues }: Props) {
   const [slug, setSlug] = useState(defaultValues?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(Boolean(defaultValues?.slug));
+  const [thumbnail, setThumbnail] = useState(defaultValues?.thumbnail ?? "");
+  const [previewHtml, setPreviewHtml] = useState(defaultValues?.previewHtml ?? "");
+  const [galleryImages, setGalleryImages] = useState<string[]>(() =>
+    extractImageUrls(defaultValues?.previewHtml ?? "")
+  );
 
   return (
     <form action={action} className="flex flex-col gap-3">
@@ -85,12 +100,59 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
         />
       </label>
 
+      <div className="rounded border p-3">
+        <p className="text-sm font-medium">Preview</p>
+        <p className="mt-1 text-xs text-gray-500">
+          Pega aquí el código HTML con las capturas del video. Se guarda y se
+          muestra en la página del video, debajo de la descripción.
+        </p>
+        <textarea
+          name="previewHtml"
+          value={previewHtml}
+          onChange={(e) => setPreviewHtml(e.target.value)}
+          className="mt-2 w-full rounded border px-3 py-2 font-mono text-xs"
+          rows={5}
+          placeholder="<div>...código HTML con imágenes...</div>"
+        />
+        <button
+          type="button"
+          onClick={() => setGalleryImages(extractImageUrls(previewHtml))}
+          className="mt-2 rounded border px-3 py-1.5 text-sm hover:bg-gray-50"
+        >
+          Cargar imágenes de la vista previa
+        </button>
+
+        {galleryImages.length > 0 && (
+          <div className="mt-3">
+            <p className="text-xs font-medium text-gray-500">
+              Elige una imagen como miniatura del video:
+            </p>
+            <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-6">
+              {galleryImages.map((src) => (
+                <button
+                  key={src}
+                  type="button"
+                  onClick={() => setThumbnail(src)}
+                  className={`aspect-video overflow-hidden rounded border-2 ${
+                    thumbnail === src ? "border-black" : "border-transparent"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       <label className="text-sm font-medium">
         URL de la imagen/miniatura
         <input
           type="url"
           name="thumbnail"
-          defaultValue={defaultValues?.thumbnail ?? ""}
+          value={thumbnail}
+          onChange={(e) => setThumbnail(e.target.value)}
           className="mt-1 w-full rounded border px-3 py-2"
         />
       </label>

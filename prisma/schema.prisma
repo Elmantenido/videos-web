@@ -30,6 +30,7 @@ model Video {
   thumbnail   String?
   duration    String?
   studio      String?
+  previewHtml String?
   source      String?
   published   Boolean    @default(true)
   createdAt   DateTime   @default(now())

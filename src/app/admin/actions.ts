@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slugify";
+import { sanitizeEmbedCode } from "@/lib/embed";
 import { SETTING_GROUPS, SEO_FIELDS } from "@/lib/site-settings";
 import {
   SESSION_COOKIE,
@@ -122,6 +123,7 @@ export async function createVideo(formData: FormData) {
       thumbnail: String(formData.get("thumbnail") ?? "") || null,
       duration: String(formData.get("duration") ?? "") || null,
       studio: String(formData.get("studio") ?? "") || null,
+      previewHtml: sanitizeEmbedCode(String(formData.get("previewHtml") ?? "")) || null,
       published: formData.get("published") === "on",
       categories: { connect: categories },
       tags: { connect: tags },
@@ -156,6 +158,7 @@ export async function updateVideo(videoId: number, formData: FormData) {
       thumbnail: String(formData.get("thumbnail") ?? "") || null,
       duration: String(formData.get("duration") ?? "") || null,
       studio: String(formData.get("studio") ?? "") || null,
+      previewHtml: sanitizeEmbedCode(String(formData.get("previewHtml") ?? "")) || null,
       published: formData.get("published") === "on",
       categories: { set: categories },
       tags: { set: tags },

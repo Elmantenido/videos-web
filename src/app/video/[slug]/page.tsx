@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { isEmbedUrl } from "@/lib/embed";
+import { isEmbedUrl, sanitizeEmbedCode } from "@/lib/embed";
 import { getSiteSettings } from "@/lib/site-settings";
 import SiteHeader from "@/components/SiteHeader";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -101,6 +101,12 @@ export default async function VideoPage({ params }: Props) {
           )}
           {video.description && (
             <p className="mt-3 text-gray-700">{video.description}</p>
+          )}
+          {video.previewHtml && (
+            <div
+              className="mt-4"
+              dangerouslySetInnerHTML={{ __html: sanitizeEmbedCode(video.previewHtml) }}
+            />
           )}
         </div>
 
