@@ -12,32 +12,27 @@ function clientIp(req: NextRequest): string | null {
   return req.headers.get("x-real-ip");
 }
 
-export async function touchOrCreateVisit(req: NextRequest, res: NextResponse) {
-  const pathname = req.nextUrl.pathname;
-  const isAdmin = verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
+/**
+ * Runs on every matched request, including Next.js's automatic Link
+ * prefetches — so this only ever CREATES the session cookie when missing.
+ * It must not record a pageview or touch lastSeenAt, or every prefetched
+ * link on a page would count as a real visit. Real pageviews are recorded
+ * client-side instead (see /api/track/pageview), which only fires once a
+ * page has actually mounted after a real navigation.
+ */
+export async function ensureVisit(req: NextRequest, res: NextResponse) {
   const existingId = req.cookies.get(VISIT_COOKIE)?.value;
 
   if (existingId) {
-    try {
-      await prisma.$transaction([
-        prisma.visit.update({
-          where: { id: existingId },
-          data: { lastSeenAt: new Date(), ...(isAdmin ? { isAdmin: true } : {}) },
-        }),
-        prisma.pageView.create({ data: { visitId: existingId, path: pathname } }),
-      ]);
-      res.cookies.set(VISIT_COOKIE, existingId, {
-        maxAge: SESSION_WINDOW_SECONDS,
-        path: "/",
-        httpOnly: true,
-        sameSite: "lax",
-      });
-      return;
-    } catch {
-      // visit id from an old/cleared database — fall through and create a new one
-    }
+    const stillExists = await prisma.visit.findUnique({
+      where: { id: existingId },
+      select: { id: true },
+    });
+    if (stillExists) return;
   }
 
+  const pathname = req.nextUrl.pathname;
+  const isAdmin = verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
   const id = crypto.randomUUID();
   const ip = clientIp(req);
   const referrer = req.headers.get("referer") || null;
@@ -46,7 +41,6 @@ export async function touchOrCreateVisit(req: NextRequest, res: NextResponse) {
   await prisma.visit.create({
     data: { id, landingPage: pathname, referrer, country, isAdmin },
   });
-  await prisma.pageView.create({ data: { visitId: id, path: pathname } });
 
   res.cookies.set(VISIT_COOKIE, id, {
     maxAge: SESSION_WINDOW_SECONDS,

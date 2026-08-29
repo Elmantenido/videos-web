@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
-import { touchOrCreateVisit } from "@/lib/visit";
+import { ensureVisit } from "@/lib/visit";
 
 export const config = {
   matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
@@ -17,6 +17,6 @@ export async function proxy(req: NextRequest) {
   }
 
   const res = NextResponse.next();
-  await touchOrCreateVisit(req, res);
+  await ensureVisit(req, res);
   return res;
 }
