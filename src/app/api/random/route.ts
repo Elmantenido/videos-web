@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_VIDEO_SELECT } from "@/lib/video-select";
 
 function shuffle<T>(arr: T[]): T[] {
   const result = [...arr];
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
       published: true,
       ...(excludeIds.length ? { id: { notIn: excludeIds } } : {}),
     },
-    include: { categories: true },
+    select: PUBLIC_VIDEO_SELECT,
   });
 
   const random = shuffle(videos).slice(0, take);

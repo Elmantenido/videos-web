@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { PUBLIC_VIDEO_SELECT } from "@/lib/video-select";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: "desc" },
     take,
     ...(cursor ? { skip: 1, cursor: { id: Number(cursor) } } : {}),
-    include: { categories: true, tags: true },
+    select: PUBLIC_VIDEO_SELECT,
   });
 
   return NextResponse.json({ videos });
