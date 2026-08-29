@@ -198,6 +198,70 @@ export async function deleteReport(reportId: number) {
   revalidatePath("/admin/reports");
 }
 
+function decodeHtmlEntities(text: string): string {
+  return text
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .trim();
+}
+
+function extractMetaContent(html: string, property: string): string | null {
+  const patterns = [
+    new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']*)["']`, "i"),
+    new RegExp(`<meta[^>]*content=["']([^"']*)["'][^>]*property=["']${property}["']`, "i"),
+  ];
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match) return decodeHtmlEntities(match[1]);
+  }
+  return null;
+}
+
+function extractJsonLd(html: string): Record<string, unknown> | null {
+  const match = html.match(
+    /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/i
+  );
+  if (!match) return null;
+  try {
+    return JSON.parse(match[1]);
+  } catch {
+    return null;
+  }
+}
+
+function extractCategoryNames(html: string): string[] {
+  const matches = html.matchAll(/<a[^>]*href=["']\/categoria\/[^"']*["'][^>]*>([^<]*)<\/a>/gi);
+  const names = Array.from(matches, (m) => decodeHtmlEntities(m[1])).filter(Boolean);
+  return Array.from(new Set(names));
+}
+
+function extractStudio(html: string): string | null {
+  const container = html.match(
+    /<div[^>]*gap-x-3 gap-y-1 text-sm text-gray-500[^>]*>([\s\S]*?)<\/div>/i
+  );
+  if (!container) return null;
+  const spans = container[1].match(/<span[^>]*>([^<]*)<\/span>/gi) ?? [];
+  for (const span of spans) {
+    const text = decodeHtmlEntities(span.replace(/<[^>]+>/g, ""));
+    if (text && !/views?$/i.test(text)) return text;
+  }
+  return null;
+}
+
+function extractPreviewImageUrls(html: string): string[] {
+  const imgTags = html.match(/<img\b[^>]*>/gi) ?? [];
+  const urls: string[] = [];
+  for (const tag of imgTags) {
+    if (!tag.includes("aspect-[9/10]")) continue;
+    const match = tag.match(/src\s*=\s*["']([^"']+)["']/i);
+    if (match) urls.push(match[1]);
+  }
+  return Array.from(new Set(urls));
+}
+
 export async function extractFromUrl(url: string) {
   await requireAuth();
 
@@ -208,32 +272,52 @@ export async function extractFromUrl(url: string) {
     return { error: "Esa URL no es válida." };
   }
 
-  const slug = target.pathname.split("/").filter(Boolean).pop();
-  if (!slug) {
-    return { error: "No se pudo identificar el video en esa URL (falta el slug)." };
-  }
-
-  const exportKey = process.env.EXPORT_API_KEY;
-  if (!exportKey) {
-    return { error: "Falta configurar EXPORT_API_KEY en este servidor." };
-  }
-
+  let html: string;
   try {
-    const res = await fetch(
-      `${target.origin}/api/admin/export?slug=${encodeURIComponent(slug)}`,
-      { headers: { "x-export-key": exportKey }, cache: "no-store" }
-    );
-    if (res.status === 401) {
-      return { error: "La otra instalación rechazó la clave (EXPORT_API_KEY no coincide en ambos sitios)." };
-    }
+    const res = await fetch(target.toString(), { cache: "no-store" });
     if (!res.ok) {
-      return { error: `No se encontró ese video en el otro sitio (${res.status}).` };
+      return { error: `No se pudo abrir esa página (${res.status}).` };
     }
-    const data = await res.json();
-    return { data };
+    html = await res.text();
   } catch {
-    return { error: "No se pudo conectar con ese sitio." };
+    return { error: "No se pudo conectar con esa URL." };
   }
+
+  const jsonLd = extractJsonLd(html);
+  const title =
+    (typeof jsonLd?.name === "string" ? jsonLd.name : null) ??
+    extractMetaContent(html, "og:title") ??
+    html.match(/<title>([^<]*)<\/title>/i)?.[1] ??
+    null;
+
+  if (!title) {
+    return { error: "No se encontraron datos de video en esa página." };
+  }
+
+  const description =
+    (typeof jsonLd?.description === "string" ? jsonLd.description : null) ??
+    extractMetaContent(html, "og:description");
+
+  const thumbnail =
+    (typeof jsonLd?.thumbnailUrl === "string" ? jsonLd.thumbnailUrl : null) ??
+    extractMetaContent(html, "og:image");
+
+  const previewImages = extractPreviewImageUrls(html);
+
+  return {
+    data: {
+      title: decodeHtmlEntities(title),
+      description: description ? decodeHtmlEntities(description) : null,
+      embedUrl: "",
+      thumbnail,
+      backgroundImage: null as string | null,
+      duration: null as string | null,
+      studio: extractStudio(html),
+      previewHtml: previewImages.map((src) => `<img src="${src}">`).join(""),
+      categoryNames: extractCategoryNames(html),
+      tagNames: [] as string[],
+    },
+  };
 }
 
 export async function updateSiteSettings(formData: FormData) {

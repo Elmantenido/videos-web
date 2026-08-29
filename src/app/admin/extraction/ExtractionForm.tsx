@@ -36,7 +36,7 @@ export default function ExtractionForm() {
     setLoading(false);
 
     if (result.error) setError(result.error);
-    else setData(result.data);
+    else setData(result.data ?? null);
   }
 
   function useThisData() {
@@ -95,9 +95,14 @@ export default function ExtractionForm() {
             </div>
           </div>
 
+          <p className="mt-3 text-xs text-amber-600">
+            El enlace del video (embed) no viene incluido por seguridad —
+            deberás pegarlo tú mismo en el siguiente paso.
+          </p>
+
           <button
             onClick={useThisData}
-            className="mt-4 rounded bg-black px-4 py-2 text-sm text-white hover:bg-gray-800"
+            className="mt-2 rounded bg-black px-4 py-2 text-sm text-white hover:bg-gray-800"
           >
             Usar estos datos para crear el video
           </button>

@@ -9,10 +9,12 @@ export default function ExtractionPage() {
       </Link>
       <h1 className="mb-1 mt-2 text-2xl font-bold">Extracción</h1>
       <p className="mb-6 text-sm text-gray-500">
-        Pega la URL de un video de tu otra instalación de este mismo proyecto
-        para traer su título, descripción, imágenes, categorías y tags, y
-        usarlos como base al crear el video aquí. Requiere que ambos sitios
-        tengan configurado el mismo <code>EXPORT_API_KEY</code>.
+        Pega la URL pública de un video (de tu otra instalación de este mismo
+        proyecto) para traer su título, descripción, imágenes, categorías y
+        estudio, y usarlos como base al crear el video aquí. No requiere
+        ninguna clave: lee la misma página pública que vería cualquier
+        visitante. El enlace del video (embed) no se puede extraer así, por
+        seguridad — tendrás que pegarlo tú manualmente.
       </p>
       <ExtractionForm />
     </main>
