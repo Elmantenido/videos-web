@@ -32,43 +32,65 @@ export default async function HomePage() {
   const heroEnabled = s.hero_enabled !== "false";
   const heroVideo = latestVideos[0];
 
-  const randomSection = (
-    <section id="random" className="catalog-section">
-      <div className="section-heading">
+  const contentSections = (
+    <>
+      <section id="categorias" className="category-strip">
         <div>
-          <p className="section-kicker">{s.random_kicker}</p>
-          <h2>{s.random_title}</h2>
+          <p className="section-kicker">{s.categories_kicker}</p>
+          <h2>{s.categories_title_line1} <em>{s.categories_title_emphasis}</em></h2>
         </div>
-      </div>
-      <VideoCarousel
-        mode="random"
-        initialVideos={randomVideos}
-        brandPrefix={s.brand_prefix}
-        brandSuffix={s.brand_suffix}
-        visibleCount={CAROUSEL_PAGE_SIZE}
-      />
-    </section>
-  );
+        <nav className="category-links" aria-label="Categories">
+          <Link className="category-pill selected" href="#catalogo">{s.category_pill_all} <span>{totalVideos}</span></Link>
+          {categories.map((category) => (
+            <Link key={category.id} className="category-pill" href={`/categoria/${category.slug}`}>
+              {category.name}
+            </Link>
+          ))}
+        </nav>
+      </section>
 
-  const catalogSection = (
-    <section id="catalogo" className="catalog-section">
-      <div className="section-heading">
-        <div><p className="section-kicker">{s.catalog_kicker}</p><h2>{s.catalog_title_line1} <em>{s.catalog_title_emphasis}</em></h2></div>
-        <Link href="#catalogo" className="view-all">{s.catalog_view_all} <span>→</span></Link>
-      </div>
-      <VideoCarousel
-        mode="latest"
-        initialVideos={latestVideos}
-        brandPrefix={s.brand_prefix}
-        brandSuffix={s.brand_suffix}
-        visibleCount={CAROUSEL_PAGE_SIZE}
+      <section id="catalogo" className="catalog-section">
+        <div className="section-heading">
+          <div><p className="section-kicker">{s.catalog_kicker}</p><h2>{s.catalog_title_line1} <em>{s.catalog_title_emphasis}</em></h2></div>
+          <Link href="#catalogo" className="view-all">{s.catalog_view_all} <span>→</span></Link>
+        </div>
+        <VideoCarousel
+          mode="latest"
+          initialVideos={latestVideos}
+          brandPrefix={s.brand_prefix}
+          brandSuffix={s.brand_suffix}
+          visibleCount={CAROUSEL_PAGE_SIZE}
+        />
+        {totalVideos === 0 && (
+          <p className="empty-state">
+            {s.catalog_empty_state} <Link href="/admin">/admin</Link>.
+          </p>
+        )}
+      </section>
+
+      <section id="random" className="catalog-section">
+        <div className="section-heading">
+          <div>
+            <p className="section-kicker">{s.random_kicker}</p>
+            <h2>{s.random_title}</h2>
+          </div>
+        </div>
+        <VideoCarousel
+          mode="random"
+          initialVideos={randomVideos}
+          brandPrefix={s.brand_prefix}
+          brandSuffix={s.brand_suffix}
+          visibleCount={CAROUSEL_PAGE_SIZE}
+        />
+      </section>
+
+      <TrendingSection
+        initialRange="today"
+        initialVideos={trending}
+        kicker={s.trending_kicker}
+        title={s.trending_title}
       />
-      {totalVideos === 0 && (
-        <p className="empty-state">
-          {s.catalog_empty_state} <Link href="/admin">/admin</Link>.
-        </p>
-      )}
-    </section>
+    </>
   );
 
   return (
@@ -90,12 +112,7 @@ export default async function HomePage() {
           </div>
         </header>
 
-        {!heroEnabled && (
-          <>
-            {catalogSection}
-            {randomSection}
-          </>
-        )}
+        {!heroEnabled && contentSections}
 
         {heroEnabled && (
           <section className="hero" style={{ backgroundImage: `url(${heroVideo?.thumbnail ?? fallbackArtwork})` }}>
@@ -115,34 +132,7 @@ export default async function HomePage() {
           </section>
         )}
 
-        <section id="categorias" className="category-strip">
-          <div>
-            <p className="section-kicker">{s.categories_kicker}</p>
-            <h2>{s.categories_title_line1} <em>{s.categories_title_emphasis}</em></h2>
-          </div>
-          <nav className="category-links" aria-label="Categories">
-            <Link className="category-pill selected" href="#catalogo">{s.category_pill_all} <span>{totalVideos}</span></Link>
-            {categories.map((category) => (
-              <Link key={category.id} className="category-pill" href={`/categoria/${category.slug}`}>
-                {category.name}
-              </Link>
-            ))}
-          </nav>
-        </section>
-
-        <TrendingSection
-          initialRange="today"
-          initialVideos={trending}
-          kicker={s.trending_kicker}
-          title={s.trending_title}
-        />
-
-        {heroEnabled && (
-          <>
-            {catalogSection}
-            {randomSection}
-          </>
-        )}
+        {heroEnabled && contentSections}
 
         <footer className="footer">
           <span>{s.footer_copyright}</span>
