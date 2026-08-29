@@ -332,10 +332,25 @@ function extractDuration(html: string): string | null {
 }
 
 function extractPosterImageUrl(html: string): string | null {
+  // Some posters are lazy-loaded — the real URL can live in a data-* attribute
+  // while src itself is still a blank/placeholder image at that point, so the
+  // literal-src-only check used to skip the actual first poster and land on
+  // a later <img> that happened to have a real src.
+  const srcAttrs = [
+    "data-src",
+    "data-original",
+    "data-lazy-src",
+    "data-lazy",
+    "data-image",
+    "data-echo",
+    "src",
+  ];
   const imgTags = html.match(/<img\b[^>]*>/gi) ?? [];
   for (const tag of imgTags) {
-    const match = tag.match(/src\s*=\s*["']([^"']*images\/posters[^"']*)["']/i);
-    if (match) return match[1];
+    for (const attr of srcAttrs) {
+      const match = tag.match(new RegExp(`${attr}\\s*=\\s*["']([^"']*images/posters[^"']*)["']`, "i"));
+      if (match) return match[1];
+    }
   }
   return null;
 }
