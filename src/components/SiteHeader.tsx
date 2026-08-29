@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SearchBox from "@/components/SearchBox";
 
 type Props = {
   brandPrefix: string;
@@ -13,6 +14,9 @@ export default function SiteHeader({ brandPrefix, brandSuffix }: Props) {
           <span className="brand-mark">{brandPrefix.charAt(0)}</span>
           <span>{brandPrefix}<span>{brandSuffix}</span></span>
         </Link>
+        <div className="top-actions">
+          <SearchBox />
+        </div>
       </header>
     </div>
   );

@@ -10,7 +10,15 @@ export async function GET(req: NextRequest) {
   const videos = await prisma.video.findMany({
     where: {
       published: true,
-      ...(q ? { title: { contains: q } } : {}),
+      ...(q
+        ? {
+            OR: [
+              { title: { contains: q } },
+              { studio: { contains: q } },
+              { description: { contains: q } },
+            ],
+          }
+        : {}),
     },
     orderBy: { createdAt: "desc" },
     take,

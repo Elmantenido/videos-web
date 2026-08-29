@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTrending } from "@/lib/views";
 import TrendingSection from "@/components/TrendingSection";
+import SearchBox from "@/components/SearchBox";
 
 export const revalidate = 60; // ISR: regenera esta página cada 60s
 
@@ -72,7 +73,7 @@ export default async function HomePage() {
             <Link href="#trending">Trending</Link>
           </nav>
           <div className="top-actions">
-            <button className="icon-button" aria-label="Search videos" title="Search videos">⌕</button>
+            <SearchBox />
           </div>
         </header>
 
