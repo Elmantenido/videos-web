@@ -2,11 +2,36 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { logout, deleteVideo } from "./actions";
 
-export default async function AdminDashboard() {
-  const videos = await prisma.video.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { categories: true, tags: true },
-  });
+const PAGE_SIZE = 20;
+
+type Props = { searchParams: Promise<{ q?: string; page?: string }> };
+
+export default async function AdminDashboard({ searchParams }: Props) {
+  const { q, page: pageParam } = await searchParams;
+  const query = (q ?? "").trim();
+  const page = Math.max(1, Number(pageParam) || 1);
+
+  const where = query ? { title: { contains: query } } : {};
+
+  const [videos, total] = await Promise.all([
+    prisma.video.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      include: { categories: true, tags: true },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+    }),
+    prisma.video.count({ where }),
+  ]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  function pageHref(n: number) {
+    const params = new URLSearchParams();
+    if (query) params.set("q", query);
+    params.set("page", String(n));
+    return `/admin?${params.toString()}`;
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
@@ -57,6 +82,30 @@ export default async function AdminDashboard() {
         </div>
       </div>
 
+      <form method="GET" action="/admin" className="mb-4 flex gap-2">
+        <input
+          type="text"
+          name="q"
+          defaultValue={query}
+          placeholder="Buscar por título..."
+          className="w-full max-w-sm rounded border px-3 py-2 text-sm"
+        />
+        <button
+          type="submit"
+          className="rounded border px-4 py-2 text-sm hover:bg-gray-50"
+        >
+          Buscar
+        </button>
+        {query && (
+          <Link
+            href="/admin"
+            className="rounded border px-4 py-2 text-sm hover:bg-gray-50"
+          >
+            Limpiar
+          </Link>
+        )}
+      </form>
+
       <div className="overflow-x-auto rounded border">
         <table className="w-full text-left text-sm">
           <thead className="bg-gray-50 text-xs uppercase text-gray-500">
@@ -73,18 +122,29 @@ export default async function AdminDashboard() {
             {videos.map((video) => (
               <tr key={video.id} className="border-t">
                 <td className="px-3 py-2">
-                  <div className="h-12 w-20 overflow-hidden rounded bg-gray-100">
-                    {video.thumbnail && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={video.thumbnail}
-                        alt={video.title}
-                        className="h-full w-full object-cover"
-                      />
-                    )}
-                  </div>
+                  <Link href={`/video/${video.slug}`} target="_blank" rel="noopener noreferrer">
+                    <div className="h-12 w-20 overflow-hidden rounded bg-gray-100">
+                      {video.thumbnail && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={video.thumbnail}
+                          alt={video.title}
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                    </div>
+                  </Link>
                 </td>
-                <td className="px-3 py-2 font-medium">{video.title}</td>
+                <td className="px-3 py-2 font-medium">
+                  <Link
+                    href={`/video/${video.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                  >
+                    {video.title}
+                  </Link>
+                </td>
                 <td className="px-3 py-2 text-gray-500">
                   {video.categories.map((c) => c.name).join(", ") || "—"}
                 </td>
@@ -128,14 +188,40 @@ export default async function AdminDashboard() {
         </table>
         {videos.length === 0 && (
           <p className="p-6 text-center text-gray-500">
-            Aún no hay videos. Crea el primero desde{" "}
-            <Link href="/admin/videos/new" className="text-blue-600 hover:underline">
-              Nuevo video
-            </Link>
-            .
+            {query ? (
+              `No hay videos que coincidan con "${query}".`
+            ) : (
+              <>
+                Aún no hay videos. Crea el primero desde{" "}
+                <Link href="/admin/videos/new" className="text-blue-600 hover:underline">
+                  Nuevo video
+                </Link>
+                .
+              </>
+            )}
           </p>
         )}
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <p className="text-gray-500">
+            Página {page} de {totalPages} ({total} video{total === 1 ? "" : "s"})
+          </p>
+          <div className="flex gap-2">
+            {page > 1 && (
+              <Link href={pageHref(page - 1)} className="rounded border px-3 py-1.5 hover:bg-gray-50">
+                ← Anterior
+              </Link>
+            )}
+            {page < totalPages && (
+              <Link href={pageHref(page + 1)} className="rounded border px-3 py-1.5 hover:bg-gray-50">
+                Siguiente →
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
