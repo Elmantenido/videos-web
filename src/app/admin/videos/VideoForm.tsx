@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { slugify } from "@/lib/slugify";
 import { extractPreviewImages } from "@/lib/preview";
+import { IMPORT_STORAGE_KEY } from "../extraction/ExtractionForm";
 
 type Category = { id: number; name: string };
 
@@ -27,14 +28,55 @@ type Props = {
 };
 
 export default function VideoForm({ action, submitLabel, categories, defaultValues }: Props) {
+  const [title, setTitle] = useState(defaultValues?.title ?? "");
   const [slug, setSlug] = useState(defaultValues?.slug ?? "");
   const [slugTouched, setSlugTouched] = useState(Boolean(defaultValues?.slug));
+  const [description, setDescription] = useState(defaultValues?.description ?? "");
+  const [embedUrl, setEmbedUrl] = useState(defaultValues?.embedUrl ?? "");
   const [thumbnail, setThumbnail] = useState(defaultValues?.thumbnail ?? "");
   const [backgroundImage, setBackgroundImage] = useState(defaultValues?.backgroundImage ?? "");
+  const [duration, setDuration] = useState(defaultValues?.duration ?? "");
+  const [studio, setStudio] = useState(defaultValues?.studio ?? "");
   const [previewHtml, setPreviewHtml] = useState(defaultValues?.previewHtml ?? "");
+  const [categoryNamesText, setCategoryNamesText] = useState("");
+  const [tagNamesText, setTagNamesText] = useState(defaultValues?.tagNames ?? "");
   const [galleryImages, setGalleryImages] = useState<string[]>(() =>
     extractPreviewImages(defaultValues?.previewHtml ?? "")
   );
+
+  // Only for the "new video" page: pick up data sent over from
+  // /admin/extraction (another of the owner's own installations).
+  useEffect(() => {
+    if (defaultValues) return;
+    const raw = sessionStorage.getItem(IMPORT_STORAGE_KEY);
+    if (!raw) return;
+
+    const timeout = setTimeout(() => {
+      sessionStorage.removeItem(IMPORT_STORAGE_KEY);
+      try {
+        const imported = JSON.parse(raw);
+        if (imported.title) setTitle(imported.title);
+        if (imported.description) setDescription(imported.description);
+        if (imported.embedUrl) setEmbedUrl(imported.embedUrl);
+        if (imported.thumbnail) setThumbnail(imported.thumbnail);
+        if (imported.backgroundImage) setBackgroundImage(imported.backgroundImage);
+        if (imported.duration) setDuration(imported.duration);
+        if (imported.studio) setStudio(imported.studio);
+        if (imported.previewHtml) {
+          setPreviewHtml(imported.previewHtml);
+          setGalleryImages(extractPreviewImages(imported.previewHtml));
+        }
+        if (imported.categoryNames?.length) setCategoryNamesText(imported.categoryNames.join(", "));
+        if (imported.tagNames?.length) setTagNamesText(imported.tagNames.join(", "));
+        if (imported.title) setSlug(slugify(imported.title));
+      } catch {
+        // ignore malformed import payloads
+      }
+    }, 0);
+
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <form action={action} className="flex flex-col gap-3">
@@ -43,8 +85,9 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
         <input
           type="text"
           name="title"
-          defaultValue={defaultValues?.title}
+          value={title}
           onChange={(e) => {
+            setTitle(e.target.value);
             if (!slugTouched) setSlug(slugify(e.target.value));
           }}
           className="mt-1 w-full rounded border px-3 py-2"
@@ -74,7 +117,8 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
         Descripción
         <textarea
           name="description"
-          defaultValue={defaultValues?.description ?? ""}
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
           className="mt-1 w-full rounded border px-3 py-2"
           rows={3}
         />
@@ -87,7 +131,8 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
         &quot;insertar&quot;)
         <textarea
           name="embedUrl"
-          defaultValue={defaultValues?.embedUrl}
+          value={embedUrl}
+          onChange={(e) => setEmbedUrl(e.target.value)}
           className="mt-1 w-full rounded border px-3 py-2 font-mono text-xs"
           rows={4}
           required
@@ -175,7 +220,8 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
         <input
           type="text"
           name="duration"
-          defaultValue={defaultValues?.duration ?? ""}
+          value={duration}
+          onChange={(e) => setDuration(e.target.value)}
           className="mt-1 w-full rounded border px-3 py-2"
         />
       </label>
@@ -185,7 +231,8 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
         <input
           type="text"
           name="studio"
-          defaultValue={defaultValues?.studio ?? ""}
+          value={studio}
+          onChange={(e) => setStudio(e.target.value)}
           placeholder="Ej. Studio Ghibli"
           className="mt-1 w-full rounded border px-3 py-2"
         />
@@ -216,6 +263,8 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
         <input
           type="text"
           name="categoryNames"
+          value={categoryNamesText}
+          onChange={(e) => setCategoryNamesText(e.target.value)}
           placeholder="Tutoriales, Vlogs"
           className="mt-1 w-full rounded border px-3 py-2"
         />
@@ -226,7 +275,8 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
         <input
           type="text"
           name="tagNames"
-          defaultValue={defaultValues?.tagNames}
+          value={tagNamesText}
+          onChange={(e) => setTagNamesText(e.target.value)}
           placeholder="destacado, 2026, corto"
           className="mt-1 w-full rounded border px-3 py-2"
         />

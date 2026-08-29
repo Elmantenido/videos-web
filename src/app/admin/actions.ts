@@ -58,19 +58,19 @@ async function connectOrCreateNamed(
   names: string[]
 ) {
   const rows = await Promise.all(
-    names.map((name) =>
-      model === "category"
-        ? prisma.category.upsert({
-            where: { slug: slugify(name) },
-            update: {},
-            create: { name, slug: slugify(name) },
-          })
-        : prisma.tag.upsert({
-            where: { slug: slugify(name) },
-            update: {},
-            create: { name, slug: slugify(name) },
-          })
-    )
+    names.map(async (name) => {
+      const slug = slugify(name);
+      if (model === "category") {
+        const existing = await prisma.category.findFirst({
+          where: { OR: [{ slug }, { name }] },
+        });
+        return existing ?? prisma.category.create({ data: { name, slug } });
+      }
+      const existing = await prisma.tag.findFirst({
+        where: { OR: [{ slug }, { name }] },
+      });
+      return existing ?? prisma.tag.create({ data: { name, slug } });
+    })
   );
   return rows.map((r) => ({ id: r.id }));
 }
@@ -196,6 +196,44 @@ export async function deleteReport(reportId: number) {
   await requireAuth();
   await prisma.report.delete({ where: { id: reportId } });
   revalidatePath("/admin/reports");
+}
+
+export async function extractFromUrl(url: string) {
+  await requireAuth();
+
+  let target: URL;
+  try {
+    target = new URL(url);
+  } catch {
+    return { error: "Esa URL no es válida." };
+  }
+
+  const slug = target.pathname.split("/").filter(Boolean).pop();
+  if (!slug) {
+    return { error: "No se pudo identificar el video en esa URL (falta el slug)." };
+  }
+
+  const exportKey = process.env.EXPORT_API_KEY;
+  if (!exportKey) {
+    return { error: "Falta configurar EXPORT_API_KEY en este servidor." };
+  }
+
+  try {
+    const res = await fetch(
+      `${target.origin}/api/admin/export?slug=${encodeURIComponent(slug)}`,
+      { headers: { "x-export-key": exportKey }, cache: "no-store" }
+    );
+    if (res.status === 401) {
+      return { error: "La otra instalación rechazó la clave (EXPORT_API_KEY no coincide en ambos sitios)." };
+    }
+    if (!res.ok) {
+      return { error: `No se encontró ese video en el otro sitio (${res.status}).` };
+    }
+    const data = await res.json();
+    return { data };
+  } catch {
+    return { error: "No se pudo conectar con ese sitio." };
+  }
 }
 
 export async function updateSiteSettings(formData: FormData) {
