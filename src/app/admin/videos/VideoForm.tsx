@@ -39,6 +39,9 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
   const [studio, setStudio] = useState(defaultValues?.studio ?? "");
   const [previewHtml, setPreviewHtml] = useState(defaultValues?.previewHtml ?? "");
   const [categoryNamesText, setCategoryNamesText] = useState("");
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>(
+    defaultValues?.categoryIds ?? []
+  );
   const [tagNamesText, setTagNamesText] = useState(defaultValues?.tagNames ?? "");
   const [galleryImages, setGalleryImages] = useState<string[]>(() =>
     extractPreviewImages(defaultValues?.previewHtml ?? "")
@@ -66,7 +69,26 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
           setPreviewHtml(imported.previewHtml);
           setGalleryImages(extractPreviewImages(imported.previewHtml));
         }
-        if (imported.categoryNames?.length) setCategoryNamesText(imported.categoryNames.join(", "));
+        if (imported.categoryNames?.length) {
+          // Match imported names against categories that already exist
+          // (case-insensitively) so they get auto-checked instead of
+          // duplicated as "new" categories.
+          const matchedIds: number[] = [];
+          const newNames: string[] = [];
+          for (const rawName of imported.categoryNames as string[]) {
+            const name = rawName.trim();
+            if (!name) continue;
+            const existing = categories.find(
+              (c) => c.name.trim().toLowerCase() === name.toLowerCase()
+            );
+            if (existing) matchedIds.push(existing.id);
+            else newNames.push(name);
+          }
+          if (matchedIds.length) {
+            setSelectedCategoryIds((prev) => Array.from(new Set([...prev, ...matchedIds])));
+          }
+          setCategoryNamesText(newNames.join(", "));
+        }
         if (imported.tagNames?.length) setTagNamesText(imported.tagNames.join(", "));
         if (imported.title) setSlug(slugify(imported.title));
       } catch {
@@ -250,7 +272,14 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
                 type="checkbox"
                 name="categoryIds"
                 value={category.id}
-                defaultChecked={defaultValues?.categoryIds.includes(category.id)}
+                checked={selectedCategoryIds.includes(category.id)}
+                onChange={(e) => {
+                  setSelectedCategoryIds((prev) =>
+                    e.target.checked
+                      ? [...prev, category.id]
+                      : prev.filter((id) => id !== category.id)
+                  );
+                }}
               />
               {category.name}
             </label>

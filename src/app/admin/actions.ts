@@ -233,8 +233,19 @@ function extractJsonLd(html: string): Record<string, unknown> | null {
 }
 
 function extractCategoryNames(html: string): string[] {
-  const matches = html.matchAll(/<a[^>]*href=["']\/categoria\/[^"']*["'][^>]*>([^<]*)<\/a>/gi);
-  const names = Array.from(matches, (m) => decodeHtmlEntities(m[1])).filter(Boolean);
+  // Different source sites link categories differently (e.g. "/categoria/x"
+  // vs. "/browse/tags/category/x") — collect from every known pattern.
+  const patterns = [
+    /<a[^>]*href=["']\/categoria\/[^"']*["'][^>]*>([^<]*)<\/a>/gi,
+    /<a[^>]*href=["']\/browse\/tags\/category[^"']*["'][^>]*>([^<]*)<\/a>/gi,
+  ];
+  const names: string[] = [];
+  for (const pattern of patterns) {
+    for (const match of html.matchAll(pattern)) {
+      const name = decodeHtmlEntities(match[1]);
+      if (name) names.push(name);
+    }
+  }
   return Array.from(new Set(names));
 }
 
