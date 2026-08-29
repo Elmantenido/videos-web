@@ -42,6 +42,13 @@ export const SETTING_GROUPS: {
     ],
   },
   {
+    title: "Trending",
+    fields: [
+      { key: "trending_kicker", label: "Texto pequeño superior", default: "Most watched" },
+      { key: "trending_title", label: "Título de la sección", default: "Trending now" },
+    ],
+  },
+  {
     title: "Catálogo",
     fields: [
       { key: "catalog_kicker", label: "Texto pequeño superior", default: "Updated today" },

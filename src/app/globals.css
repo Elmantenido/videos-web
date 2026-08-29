@@ -64,9 +64,9 @@ em { color: var(--lime); font-family: Georgia, serif; font-style: italic; font-w
 .section-heading { align-items: end; display: flex; justify-content: space-between; margin-bottom: 28px; }
 .view-all { color: var(--muted); font-size: 12px; }
 .view-all span { color: var(--lime); font-size: 20px; margin-left: 7px; }
-.catalog-grid { display: grid; gap: 24px 16px; grid-template-columns: repeat(4, 1fr); }
+.catalog-grid { display: grid; gap: 24px 16px; grid-template-columns: repeat(5, 1fr); }
 .video-card { display: block; min-width: 0; }
-.thumbnail-wrap { aspect-ratio: 16 / 10; background: var(--panel); overflow: hidden; position: relative; }
+.thumbnail-wrap { aspect-ratio: 2 / 3; background: var(--panel); overflow: hidden; position: relative; }
 .thumbnail-wrap img { height: 100%; object-fit: cover; transition: transform .4s; width: 100%; }
 .video-card:hover .thumbnail-wrap img { transform: scale(1.04); }
 .no-thumbnail { align-items: center; color: var(--lime); display: flex; font-size: 18px; height: 100%; justify-content: center; letter-spacing: .1em; }
@@ -79,10 +79,27 @@ em { color: var(--lime); font-family: Georgia, serif; font-style: italic; font-w
 .video-studio { color: var(--muted); font-size: 11px; margin: 4px 0 0; }
 .card-arrow { color: var(--muted); font-size: 17px; }
 .empty-state { color: var(--muted); padding: 30px 0; }.empty-state a { color: var(--lime); }
+.trending-section { border-bottom: 1px solid var(--line); padding: 55px 0 60px; }
+.trending-tabs { display: flex; gap: 8px; }
+.trending-tab { background: transparent; border: 1px solid var(--line); color: var(--muted); cursor: pointer; font-size: 12px; padding: 9px 14px; }
+.trending-tab.selected { background: var(--lime); border-color: var(--lime); color: #161812; }
+.trending-list { display: flex; flex-direction: column; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.trending-list-loading { opacity: .5; }
+.trending-row { align-items: center; display: flex; gap: 16px; padding: 10px 6px; transition: background .15s; }
+.trending-row:hover { background: var(--panel); }
+.trending-rank { color: var(--muted); font-size: 20px; font-weight: 700; min-width: 26px; }
+.trending-thumb { aspect-ratio: 2 / 3; background: var(--panel); flex-shrink: 0; overflow: hidden; width: 46px; }
+.trending-thumb img { height: 100%; object-fit: cover; width: 100%; }
+.trending-info { display: flex; flex: 1; flex-direction: column; gap: 3px; min-width: 0; }
+.trending-name { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trending-studio { color: var(--muted); font-size: 11px; }
+.trending-views { color: var(--muted); flex-shrink: 0; font-size: 12px; }
+.trending-empty { color: var(--muted); padding: 20px 0; }
 .footer { border-top: 1px solid var(--line); color: #777a72; display: flex; font-size: 10px; justify-content: space-between; letter-spacing: .08em; padding: 23px 0; text-transform: uppercase; }
 .footer a { color: var(--lime); }
 @media (max-width: 760px) {
   .site-shell { padding: 0 20px; }.topbar { height: 74px; }.main-nav { display: none; }.admin-link { display: none; }
   .hero { margin: 0 -20px; min-height: 480px; }.hero-content { left: 28px; right: 20px; top: 25%; }.hero h1 { font-size: 56px; }.hero-shade { background: linear-gradient(90deg, rgba(10, 12, 10, .95), rgba(10, 12, 10, .25)), linear-gradient(0deg, #101110 0%, transparent 30%); }
-  .category-strip { align-items: start; flex-direction: column; padding: 48px 0 28px; }.category-links { justify-content: start; }.catalog-section { padding: 42px 0 55px; }.catalog-grid { gap: 25px 12px; grid-template-columns: repeat(2, 1fr); }.video-meta h3 { font-size: 12px; }.footer { align-items: start; flex-direction: column; gap: 10px; }
+  .category-strip { align-items: start; flex-direction: column; padding: 48px 0 28px; }.category-links { justify-content: start; }.catalog-section { padding: 42px 0 55px; }.catalog-grid { gap: 25px 12px; grid-template-columns: repeat(3, 1fr); }.video-meta h3 { font-size: 12px; }.footer { align-items: start; flex-direction: column; gap: 10px; }
+  .trending-section .section-heading { align-items: start; flex-direction: column; gap: 16px; }.trending-tabs { flex-wrap: wrap; }
 }

@@ -33,8 +33,19 @@ model Video {
   source      String?
   published   Boolean    @default(true)
   createdAt   DateTime   @default(now())
+  views       Int        @default(0)
   categories  Category[]
   tags        Tag[]
+  viewEvents  VideoView[]
+}
+
+model VideoView {
+  id        Int      @id @default(autoincrement())
+  videoId   Int
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([videoId, createdAt])
 }
 
 model SiteSetting {

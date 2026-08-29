@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettings } from "@/lib/site-settings";
+import { getTrending } from "@/lib/views";
+import TrendingSection from "@/components/TrendingSection";
 
 export const revalidate = 60; // ISR: regenera esta página cada 60s
 
@@ -8,7 +10,7 @@ const fallbackArtwork =
   "https://images.unsplash.com/photo-1578632292335-df3abbb0d586?auto=format&fit=crop&w=1200&q=85";
 
 export default async function HomePage() {
-  const [videos, categories, s] = await Promise.all([
+  const [videos, categories, s, trending] = await Promise.all([
     prisma.video.findMany({
       where: { published: true },
       orderBy: { createdAt: "desc" },
@@ -17,6 +19,7 @@ export default async function HomePage() {
     }),
     prisma.category.findMany({ orderBy: { name: "asc" } }),
     getSiteSettings(),
+    getTrending("today", 10),
   ]);
 
   return (
@@ -31,6 +34,7 @@ export default async function HomePage() {
             <Link className="active" href="/">{s.nav_home}</Link>
             <Link href="#catalogo">{s.nav_explore}</Link>
             <Link href="#categorias">{s.nav_categories}</Link>
+            <Link href="#trending">Trending</Link>
           </nav>
           <div className="top-actions">
             <button className="icon-button" aria-label="Search videos" title="Search videos">⌕</button>
@@ -67,6 +71,13 @@ export default async function HomePage() {
             ))}
           </nav>
         </section>
+
+        <TrendingSection
+          initialRange="today"
+          initialVideos={trending}
+          kicker={s.trending_kicker}
+          title={s.trending_title}
+        />
 
         <section id="catalogo" className="catalog-section">
           <div className="section-heading">

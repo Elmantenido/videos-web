@@ -1,0 +1,88 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import type { TrendingRange, TrendingVideo } from "@/lib/views";
+
+const RANGE_LABELS: { value: TrendingRange; label: string }[] = [
+  { value: "today", label: "Today" },
+  { value: "week", label: "This week" },
+  { value: "month", label: "This month" },
+  { value: "all", label: "All time" },
+];
+
+type Props = {
+  initialRange: TrendingRange;
+  initialVideos: TrendingVideo[];
+  title: string;
+  kicker: string;
+};
+
+export default function TrendingSection({ initialRange, initialVideos, title, kicker }: Props) {
+  const [range, setRange] = useState<TrendingRange>(initialRange);
+  const [cache, setCache] = useState<Partial<Record<TrendingRange, TrendingVideo[]>>>({
+    [initialRange]: initialVideos,
+  });
+  const [loading, setLoading] = useState(false);
+
+  function selectRange(next: TrendingRange) {
+    setRange(next);
+    if (cache[next]) return;
+
+    setLoading(true);
+    fetch(`/api/trending?range=${next}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setCache((prev) => ({ ...prev, [next]: data.videos ?? [] }));
+      })
+      .finally(() => setLoading(false));
+  }
+
+  const videos = cache[range] ?? [];
+
+  return (
+    <section id="trending" className="trending-section">
+      <div className="section-heading">
+        <div>
+          <p className="section-kicker">{kicker}</p>
+          <h2>{title}</h2>
+        </div>
+        <div className="trending-tabs">
+          {RANGE_LABELS.map((r) => (
+            <button
+              key={r.value}
+              className={`trending-tab ${range === r.value ? "selected" : ""}`}
+              onClick={() => selectRange(r.value)}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <ol className={`trending-list ${loading ? "trending-list-loading" : ""}`}>
+        {videos.map((video, index) => (
+          <li key={video.id}>
+            <Link href={`/video/${video.slug}`} className="trending-row">
+              <span className="trending-rank">{index + 1}</span>
+              <span className="trending-thumb">
+                {video.thumbnail ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={video.thumbnail} alt={video.title} />
+                ) : null}
+              </span>
+              <span className="trending-info">
+                <span className="trending-name">{video.title}</span>
+                {video.studio && <span className="trending-studio">{video.studio}</span>}
+              </span>
+              <span className="trending-views">{video.viewCount} views</span>
+            </Link>
+          </li>
+        ))}
+        {videos.length === 0 && !loading && (
+          <li className="trending-empty">No views in this range yet.</li>
+        )}
+      </ol>
+    </section>
+  );
+}

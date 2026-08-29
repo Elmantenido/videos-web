@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { isEmbedUrl, sanitizeEmbedCode } from "@/lib/embed";
+import { recordView } from "@/lib/views";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -34,6 +35,8 @@ export default async function VideoPage({ params }: Props) {
   const { slug } = await params;
   const video = await getVideo(slug);
   if (!video) notFound();
+
+  await recordView(video.id);
 
   const categoryIds = video.categories.map((c) => c.id);
 
@@ -83,6 +86,10 @@ export default async function VideoPage({ params }: Props) {
             )}
           </div>
           <h1 className="mt-4 text-2xl font-bold">{video.title}</h1>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
+            {video.studio && <span>{video.studio}</span>}
+            <span>{(video.views + 1).toLocaleString()} views</span>
+          </div>
           {video.categories.length > 0 && (
             <div className="mt-1 flex flex-wrap gap-2">
               {video.categories.map((category) => (
