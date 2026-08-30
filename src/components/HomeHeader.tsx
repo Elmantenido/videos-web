@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SearchBox from "@/components/SearchBox";
+import SidebarNav from "@/components/SidebarNav";
 
 type Props = {
   brandPrefix: string;
@@ -21,6 +22,7 @@ export default function HomeHeader({
   return (
     <header className="topbar">
       <div className="topbar-start">
+        <SidebarNav />
         <Link href="/" className="brand" aria-label={`${brandPrefix}${brandSuffix} home`}>
           <span className="brand-mark">{brandPrefix.charAt(0)}</span>
           <span>{brandPrefix}<span>{brandSuffix}</span></span>
