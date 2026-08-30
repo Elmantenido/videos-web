@@ -498,17 +498,30 @@ export async function extractFromUrl(url: string, videoUrl?: string) {
   const previewImages = extractPreviewImageUrls(html);
 
   let embedUrl = "";
+  let videoNote: string | null = null;
   if (videoUrl?.trim()) {
+    let videoTarget: URL | null = null;
     try {
-      const videoTarget = new URL(videoUrl.trim());
-      const videoRes = await fetch(videoTarget.toString(), { cache: "no-store" });
-      if (videoRes.ok) {
-        const videoHtml = await videoRes.text();
-        embedUrl = extractVideoUrlFromJsonLd(videoHtml) ?? extractVideoSrc(videoHtml) ?? "";
-      }
+      videoTarget = new URL(videoUrl.trim());
     } catch {
-      // Leave embedUrl empty — the admin can still paste it manually, same
-      // as when no video URL is given at all.
+      videoNote = "Esa URL de video no es válida.";
+    }
+
+    if (videoTarget) {
+      try {
+        const videoRes = await fetch(videoTarget.toString(), { cache: "no-store" });
+        if (!videoRes.ok) {
+          videoNote = `No se pudo abrir la URL de video (${videoRes.status}).`;
+        } else {
+          const videoHtml = await videoRes.text();
+          embedUrl = extractVideoUrlFromJsonLd(videoHtml) ?? extractVideoSrc(videoHtml) ?? "";
+          if (!embedUrl) {
+            videoNote = "Se abrió la URL de video, pero no se encontró un enlace reconocible ahí.";
+          }
+        }
+      } catch {
+        videoNote = "No se pudo conectar con la URL de video.";
+      }
     }
   }
 
@@ -517,6 +530,7 @@ export async function extractFromUrl(url: string, videoUrl?: string) {
       title: decodeHtmlEntities(title),
       description,
       embedUrl,
+      videoNote,
       thumbnail,
       backgroundImage: extractPosterImageUrlByAlt(html) ?? extractPosterImageUrl(html),
       duration: extractDuration(html),

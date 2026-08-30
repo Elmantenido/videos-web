@@ -8,6 +8,7 @@ type ExtractedData = {
   title: string;
   description: string | null;
   embedUrl: string;
+  videoNote: string | null;
   thumbnail: string | null;
   backgroundImage: string | null;
   duration: string | null;
@@ -116,6 +117,8 @@ export default function ExtractionForm() {
             <p className="mt-3 truncate text-xs text-green-600" title={data.embedUrl}>
               Embed detectado: {data.embedUrl}
             </p>
+          ) : data.videoNote ? (
+            <p className="mt-3 text-xs text-red-600">{data.videoNote}</p>
           ) : (
             <p className="mt-3 text-xs text-amber-600">
               El enlace del video (embed) no viene incluido por seguridad —
