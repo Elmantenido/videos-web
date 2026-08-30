@@ -49,7 +49,7 @@ export default async function CategoryPage({ params }: Props) {
       </Link>
       <h1 className="mt-2 mb-6 text-3xl font-bold">{category.name}</h1>
 
-      <section className="grid grid-cols-3 gap-4 sm:grid-cols-4 lg:grid-cols-6">
+      <section className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
         {videos.map((video) => (
           <Link
             key={video.id}
