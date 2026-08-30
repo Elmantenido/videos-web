@@ -403,8 +403,8 @@ function extractVideoUrlFromJsonLd(html: string): string | null {
     if (!isVideoObject) continue;
 
     const url =
-      (typeof json.contentUrl === "string" ? json.contentUrl : null) ??
-      (typeof json.embedUrl === "string" ? json.embedUrl : null);
+      (typeof json.embedUrl === "string" ? json.embedUrl : null) ??
+      (typeof json.contentUrl === "string" ? json.contentUrl : null);
     if (url) return url;
   }
   return null;
