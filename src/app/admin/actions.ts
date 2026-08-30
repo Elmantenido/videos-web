@@ -382,6 +382,17 @@ function extractPosterImageUrlByAlt(html: string): string | null {
   return src ? src[1] : null;
 }
 
+function extractVideoSrc(html: string): string | null {
+  // JW Player-style markup: <div class="jw-media jw-reset">
+  //   <video class="jw-video jw-reset" ... src="https://..."></video>
+  // Falls back to any <video src="..."> for sources that don't use JW Player.
+  const scoped = html.match(/<video\b(?=[^>]*\bclass=["'][^"']*\bjw-video\b)[^>]*>/i)?.[0];
+  const tag = scoped ?? html.match(/<video\b[^>]*\bsrc=["'][^"']+["'][^>]*>/i)?.[0];
+  if (!tag) return null;
+  const src = tag.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+  return src ? decodeHtmlEntities(src[1]) : null;
+}
+
 function extractPosterImageUrl(html: string): string | null {
   // Fallback for sources without the "Video poster" alt marker: some posters
   // are lazy-loaded, so the real URL can live in a data-* attribute while src
@@ -405,7 +416,7 @@ function extractPosterImageUrl(html: string): string | null {
   return null;
 }
 
-export async function extractFromUrl(url: string) {
+export async function extractFromUrl(url: string, videoUrl?: string) {
   await requireAuth();
 
   let target: URL;
@@ -458,11 +469,25 @@ export async function extractFromUrl(url: string) {
 
   const previewImages = extractPreviewImageUrls(html);
 
+  let embedUrl = "";
+  if (videoUrl?.trim()) {
+    try {
+      const videoTarget = new URL(videoUrl.trim());
+      const videoRes = await fetch(videoTarget.toString(), { cache: "no-store" });
+      if (videoRes.ok) {
+        embedUrl = extractVideoSrc(await videoRes.text()) ?? "";
+      }
+    } catch {
+      // Leave embedUrl empty — the admin can still paste it manually, same
+      // as when no video URL is given at all.
+    }
+  }
+
   return {
     data: {
       title: decodeHtmlEntities(title),
       description,
-      embedUrl: "",
+      embedUrl,
       thumbnail,
       backgroundImage: extractPosterImageUrlByAlt(html) ?? extractPosterImageUrl(html),
       duration: extractDuration(html),

@@ -23,6 +23,7 @@ export const IMPORT_STORAGE_KEY = "novaflix_video_import";
 export default function ExtractionForm() {
   const router = useRouter();
   const [url, setUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<ExtractedData | null>(null);
@@ -33,7 +34,7 @@ export default function ExtractionForm() {
     setError(null);
     setData(null);
 
-    const result = await extractFromUrl(url);
+    const result = await extractFromUrl(url, videoUrl);
     setLoading(false);
 
     if (result.error) setError(result.error);
@@ -48,22 +49,34 @@ export default function ExtractionForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={handleExtract} className="flex gap-2">
-        <input
-          type="url"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://tu-otro-sitio.com/video/algun-slug"
-          required
-          className="w-full rounded border px-3 py-2 text-sm"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded bg-black px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-50"
-        >
-          {loading ? "Buscando..." : "Extraer"}
-        </button>
+      <form onSubmit={handleExtract} className="flex flex-col gap-2">
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://tu-otro-sitio.com/video/algun-slug"
+            required
+            className="w-full rounded border px-3 py-2 text-sm"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded bg-black px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-50"
+          >
+            {loading ? "Buscando..." : "Extraer"}
+          </button>
+        </div>
+        <label className="text-sm font-medium">
+          Video
+          <input
+            type="url"
+            value={videoUrl}
+            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="https://tu-otro-sitio.com/embed/algun-video (opcional, para traer el embed)"
+            className="mt-1 w-full rounded border px-3 py-2 text-sm font-normal"
+          />
+        </label>
       </form>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
@@ -99,10 +112,16 @@ export default function ExtractionForm() {
             </div>
           </div>
 
-          <p className="mt-3 text-xs text-amber-600">
-            El enlace del video (embed) no viene incluido por seguridad —
-            deberás pegarlo tú mismo en el siguiente paso.
-          </p>
+          {data.embedUrl ? (
+            <p className="mt-3 truncate text-xs text-green-600" title={data.embedUrl}>
+              Embed detectado: {data.embedUrl}
+            </p>
+          ) : (
+            <p className="mt-3 text-xs text-amber-600">
+              El enlace del video (embed) no viene incluido por seguridad —
+              deberás pegarlo tú mismo en el siguiente paso.
+            </p>
+          )}
 
           <button
             onClick={useThisData}

@@ -13,8 +13,10 @@ export default function ExtractionPage() {
         proyecto) para traer su título, descripción, imágenes, categorías y
         estudio, y usarlos como base al crear el video aquí. No requiere
         ninguna clave: lee la misma página pública que vería cualquier
-        visitante. El enlace del video (embed) no se puede extraer así, por
-        seguridad — tendrás que pegarlo tú manualmente.
+        visitante. Si además pegás una URL en &quot;Video&quot;, se busca ahí
+        el enlace real del reproductor para completar el Embed
+        automáticamente; si no la pegás, o no se encuentra, deberás pegarlo
+        tú manualmente en el siguiente paso.
       </p>
       <ExtractionForm />
     </main>
