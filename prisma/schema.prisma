@@ -31,6 +31,7 @@ model Video {
   backgroundImage String?
   duration    String?
   studio      String?
+  releasedAt  DateTime?
   previewHtml String?
   source      String?
   published   Boolean    @default(true)
@@ -40,6 +41,8 @@ model Video {
   tags        Tag[]
   viewEvents  VideoView[]
   reports     Report[]
+
+  @@index([releasedAt])
 }
 
 model Report {

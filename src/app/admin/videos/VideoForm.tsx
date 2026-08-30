@@ -20,6 +20,7 @@ type Props = {
     backgroundImage: string | null;
     duration: string | null;
     studio: string | null;
+    releasedAt: string | null;
     previewHtml: string | null;
     published: boolean;
     categoryIds: number[];
@@ -37,6 +38,7 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
   const [backgroundImage, setBackgroundImage] = useState(defaultValues?.backgroundImage ?? "");
   const [duration, setDuration] = useState(defaultValues?.duration ?? "");
   const [studio, setStudio] = useState(defaultValues?.studio ?? "");
+  const [releasedAt, setReleasedAt] = useState(defaultValues?.releasedAt ?? "");
   const [previewHtml, setPreviewHtml] = useState(defaultValues?.previewHtml ?? "");
   const [categoryNamesText, setCategoryNamesText] = useState("");
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>(
@@ -65,6 +67,7 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
         if (imported.backgroundImage) setBackgroundImage(imported.backgroundImage);
         if (imported.duration) setDuration(imported.duration);
         if (imported.studio) setStudio(imported.studio);
+        if (imported.releasedAt) setReleasedAt(imported.releasedAt);
         if (imported.previewHtml) {
           setPreviewHtml(imported.previewHtml);
           setGalleryImages(extractPreviewImages(imported.previewHtml));
@@ -256,6 +259,17 @@ export default function VideoForm({ action, submitLabel, categories, defaultValu
           value={studio}
           onChange={(e) => setStudio(e.target.value)}
           placeholder="Ej. Studio Ghibli"
+          className="mt-1 w-full rounded border px-3 py-2"
+        />
+      </label>
+
+      <label className="text-sm font-medium">
+        Released
+        <input
+          type="date"
+          name="releasedAt"
+          value={releasedAt}
+          onChange={(e) => setReleasedAt(e.target.value)}
           className="mt-1 w-full rounded border px-3 py-2"
         />
       </label>

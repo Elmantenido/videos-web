@@ -13,7 +13,7 @@ export type CarouselVideo = {
 };
 
 type Props = {
-  mode: "latest" | "random";
+  mode: "latest" | "random" | "newReleases";
   initialVideos: CarouselVideo[];
   brandPrefix: string;
   brandSuffix: string;
@@ -55,6 +55,12 @@ export default function VideoCarousel({
         const cursor = videos[videos.length - 1]?.id;
         const res = await fetch(
           `/api/videos?take=${visibleCount}${cursor ? `&cursor=${cursor}` : ""}`
+        );
+        const data = await res.json();
+        more = data.videos ?? [];
+      } else if (mode === "newReleases") {
+        const res = await fetch(
+          `/api/new-releases?take=${visibleCount}&skip=${videos.length}`
         );
         const data = await res.json();
         more = data.videos ?? [];

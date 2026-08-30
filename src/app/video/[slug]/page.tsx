@@ -133,6 +133,16 @@ export default async function VideoPage({ params }: Props) {
           <h1 className="mt-4 text-2xl font-bold">{video.title}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
             {video.studio && <span>{video.studio}</span>}
+            {video.releasedAt && (
+              <span>
+                Released{" "}
+                {video.releasedAt.toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </span>
+            )}
             {video.duration && <span>{video.duration}</span>}
             <span>{video.views.toLocaleString()} views</span>
           </div>

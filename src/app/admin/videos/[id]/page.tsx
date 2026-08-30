@@ -38,6 +38,7 @@ export default async function EditVideoPage({ params }: Props) {
           backgroundImage: video.backgroundImage,
           duration: video.duration,
           studio: video.studio,
+          releasedAt: video.releasedAt ? video.releasedAt.toISOString().slice(0, 10) : null,
           previewHtml: video.previewHtml,
           published: video.published,
           categoryIds: video.categories.map((c) => c.id),

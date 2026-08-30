@@ -4,6 +4,7 @@ import { getHomeData } from "@/lib/home-data";
 import { absoluteUrl } from "@/lib/seo";
 import TrendingSection from "@/components/TrendingSection";
 import CatalogSection from "@/components/CatalogSection";
+import NewReleasesSection from "@/components/NewReleasesSection";
 import RandomVideosSection from "@/components/RandomVideosSection";
 import CategoriesSection from "@/components/CategoriesSection";
 import HomeHeader from "@/components/HomeHeader";
@@ -22,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ExplorePage() {
-  const { latestVideos, randomVideos, totalVideos, categories, settings: s, trending } =
+  const { latestVideos, newReleases, randomVideos, totalVideos, categories, settings: s, trending } =
     await getHomeData();
 
   return (
@@ -55,6 +56,14 @@ export default async function ExplorePage() {
           titleEmphasis={s.catalog_title_emphasis}
           viewAllLabel={s.catalog_view_all}
           emptyStateText={s.catalog_empty_state}
+          brandPrefix={s.brand_prefix}
+          brandSuffix={s.brand_suffix}
+        />
+
+        <NewReleasesSection
+          videos={newReleases}
+          kicker={s.new_releases_kicker}
+          title={s.new_releases_title}
           brandPrefix={s.brand_prefix}
           brandSuffix={s.brand_suffix}
         />

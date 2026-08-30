@@ -12,6 +12,7 @@ type ExtractedData = {
   backgroundImage: string | null;
   duration: string | null;
   studio: string | null;
+  releasedAt: string | null;
   previewHtml: string | null;
   categoryNames: string[];
   tagNames: string[];
@@ -81,6 +82,9 @@ export default function ExtractionForm() {
             <div className="min-w-0">
               <p className="font-semibold">{data.title}</p>
               {data.studio && <p className="text-sm text-gray-500">{data.studio}</p>}
+              {data.releasedAt && (
+                <p className="text-sm text-gray-500">Released: {data.releasedAt}</p>
+              )}
               {data.description && (
                 <p className="mt-1 line-clamp-3 text-sm text-gray-600">{data.description}</p>
               )}

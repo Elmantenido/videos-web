@@ -78,6 +78,13 @@ export const SETTING_GROUPS: {
     ],
   },
   {
+    title: "New Releases",
+    fields: [
+      { key: "new_releases_kicker", label: "Texto pequeño superior", default: "Fresh drops" },
+      { key: "new_releases_title", label: "Título de la sección", default: "New Releases" },
+    ],
+  },
+  {
     title: "Random",
     fields: [
       { key: "random_kicker", label: "Texto pequeño superior", default: "Feeling lucky" },

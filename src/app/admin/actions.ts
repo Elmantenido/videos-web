@@ -14,6 +14,13 @@ import {
   isAuthenticated,
 } from "@/lib/auth";
 
+function parseReleasedAt(formData: FormData): Date | null {
+  const raw = String(formData.get("releasedAt") ?? "").trim();
+  if (!raw) return null;
+  const date = new Date(`${raw}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 async function requireAuth() {
   if (!(await isAuthenticated())) {
     redirect("/admin/login");
@@ -124,6 +131,7 @@ export async function createVideo(formData: FormData) {
       backgroundImage: String(formData.get("backgroundImage") ?? "") || null,
       duration: String(formData.get("duration") ?? "") || null,
       studio: String(formData.get("studio") ?? "") || null,
+      releasedAt: parseReleasedAt(formData),
       previewHtml: sanitizeEmbedCode(String(formData.get("previewHtml") ?? "")) || null,
       published: formData.get("published") === "on",
       categories: { connect: categories },
@@ -160,6 +168,7 @@ export async function updateVideo(videoId: number, formData: FormData) {
       backgroundImage: String(formData.get("backgroundImage") ?? "") || null,
       duration: String(formData.get("duration") ?? "") || null,
       studio: String(formData.get("studio") ?? "") || null,
+      releasedAt: parseReleasedAt(formData),
       previewHtml: sanitizeEmbedCode(String(formData.get("previewHtml") ?? "")) || null,
       published: formData.get("published") === "on",
       categories: { set: categories },
@@ -312,13 +321,26 @@ function extractLabeledSection(html: string, label: string): string | null {
   return text || null;
 }
 
-function extractStudioByLabel(html: string): string | null {
-  const idx = html.search(/Studio/i);
+/** Finds a label's text anywhere in the page, then reads the next "value pill" strong tag after it. */
+function extractValueByLabel(html: string, label: string): string | null {
+  const idx = html.search(new RegExp(label, "i"));
   if (idx === -1) return null;
   const match = html
     .slice(idx)
     .match(/<strong[^>]*class=["'][^"']*font-medium text-primary[^"']*["'][^>]*>([^<]*)<\/strong>/i);
   return match ? decodeHtmlEntities(match[1]) : null;
+}
+
+function extractStudioByLabel(html: string): string | null {
+  return extractValueByLabel(html, "Studio");
+}
+
+/** Normalizes whatever date text a source site shows (e.g. "July 30, 2026") to "yyyy-mm-dd". */
+function extractReleasedAt(html: string): string | null {
+  const raw = extractValueByLabel(html, "Released");
+  if (!raw) return null;
+  const date = new Date(raw);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
 }
 
 function extractDuration(html: string): string | null {
@@ -436,6 +458,7 @@ export async function extractFromUrl(url: string) {
         extractStudioByLabel(html) ??
         extractLabeledSection(html, "Studio") ??
         extractStudio(html),
+      releasedAt: extractReleasedAt(html),
       previewHtml: previewImages.map((src) => `<img src="${src}">`).join(""),
       categoryNames: extractCategoryNames(html),
       tagNames: [] as string[],
