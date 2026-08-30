@@ -104,6 +104,11 @@ export const SEO_FIELDS: SettingField[] = [
   },
   { key: "seo_keywords", label: "Palabras clave (separadas por coma)", default: "" },
   { key: "seo_og_image", label: "Imagen para compartir en redes (OG/Twitter, URL)", default: "" },
+  {
+    key: "seo_google_site_verification",
+    label: "Código de verificación de Google Search Console (meta tag, solo el valor content)",
+    default: "",
+  },
 ];
 
 export const DEFAULT_SETTINGS: Record<string, string> = Object.fromEntries(

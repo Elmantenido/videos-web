@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { extractPreviewImages } from "@/lib/preview";
 import { getSiteSettings } from "@/lib/site-settings";
+import { absoluteUrl, toIsoDuration } from "@/lib/seo";
 import SiteHeader from "@/components/SiteHeader";
 import VideoPlayer from "@/components/VideoPlayer";
 import ReportProblemButton from "@/components/ReportProblemButton";
@@ -25,11 +26,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: video.title,
     description: video.description ?? undefined,
+    alternates: { canonical: absoluteUrl(`/video/${video.slug}`) },
     openGraph: {
       title: video.title,
       description: video.description ?? undefined,
       images: video.thumbnail ? [video.thumbnail] : undefined,
+      url: absoluteUrl(`/video/${video.slug}`),
       type: "video.other",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: video.title,
+      description: video.description ?? undefined,
+      images: video.thumbnail ? [video.thumbnail] : undefined,
     },
   };
 }
@@ -62,15 +71,55 @@ export default async function VideoPage({ params }: Props) {
     description: video.description ?? video.title,
     thumbnailUrl: video.thumbnail ?? undefined,
     uploadDate: video.createdAt.toISOString(),
+    duration: toIsoDuration(video.duration),
+    interactionStatistic: {
+      "@type": "InteractionCounter",
+      interactionType: "https://schema.org/WatchAction",
+      userInteractionCount: video.views,
+    },
+  };
+
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      ...(video.categories[0]
+        ? [
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: video.categories[0].name,
+              item: absoluteUrl(`/categoria/${video.categories[0].slug}`),
+            },
+          ]
+        : []),
+      {
+        "@type": "ListItem",
+        position: video.categories[0] ? 3 : 2,
+        name: video.title,
+        item: absoluteUrl(`/video/${video.slug}`),
+      },
+    ],
   };
 
   return (
     <main>
       <SiteHeader brandPrefix={s.brand_prefix} brandSuffix={s.brand_suffix} />
       <div className="mx-auto max-w-6xl px-4 py-8">
-      <Link href="/" className="text-sm text-gray-500 hover:underline">
-        ← Back
-      </Link>
+      <nav aria-label="Breadcrumb" className="text-sm text-gray-500">
+        <Link href="/" className="hover:underline">Home</Link>
+        {video.categories[0] && (
+          <>
+            {" / "}
+            <Link href={`/categoria/${video.categories[0].slug}`} className="hover:underline">
+              {video.categories[0].name}
+            </Link>
+          </>
+        )}
+        {" / "}
+        <span className="text-gray-700">{video.title}</span>
+      </nav>
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px]">
         <div>
@@ -84,6 +133,7 @@ export default async function VideoPage({ params }: Props) {
           <h1 className="mt-4 text-2xl font-bold">{video.title}</h1>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
             {video.studio && <span>{video.studio}</span>}
+            {video.duration && <span>{video.duration}</span>}
             <span>{video.views.toLocaleString()} views</span>
           </div>
           {video.categories.length > 0 && (
@@ -135,12 +185,12 @@ export default async function VideoPage({ params }: Props) {
 
       {previewImages.length > 0 && (
         <div className="mt-8 grid grid-cols-[repeat(auto-fill,minmax(min(450px,100%),450px))] gap-3">
-          {previewImages.map((src) => (
+          {previewImages.map((src, i) => (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               key={src}
               src={src}
-              alt=""
+              alt={`${video.title} — captura ${i + 1}`}
               className="aspect-[9/10] w-full rounded object-cover"
             />
           ))}
@@ -151,6 +201,10 @@ export default async function VideoPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
     </main>
   );

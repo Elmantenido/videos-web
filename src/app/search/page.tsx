@@ -8,7 +8,13 @@ type Props = { searchParams: Promise<{ q?: string }> };
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { q } = await searchParams;
-  return { title: q ? `Search: ${q}` : "Search" };
+  return {
+    title: q ? `Search: ${q}` : "Search",
+    // Internal search-result pages are query-driven, thin/duplicate content
+    // that Google explicitly recommends keeping out of the index — still
+    // crawlable so link discovery on the page keeps working.
+    robots: { index: false, follow: true },
+  };
 }
 
 export default async function SearchPage({ searchParams }: Props) {

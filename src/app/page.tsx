@@ -1,5 +1,7 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { getHomeData } from "@/lib/home-data";
+import { absoluteUrl } from "@/lib/seo";
 import TrendingSection from "@/components/TrendingSection";
 import CatalogSection from "@/components/CatalogSection";
 import RandomVideosSection from "@/components/RandomVideosSection";
@@ -7,6 +9,10 @@ import CategoriesSection from "@/components/CategoriesSection";
 import HomeHeader from "@/components/HomeHeader";
 
 export const revalidate = 60; // ISR: regenera esta página cada 60s
+
+export async function generateMetadata(): Promise<Metadata> {
+  return { alternates: { canonical: absoluteUrl("/") } };
+}
 
 const fallbackArtwork =
   "https://images.unsplash.com/photo-1578632292335-df3abbb0d586?auto=format&fit=crop&w=1200&q=85";

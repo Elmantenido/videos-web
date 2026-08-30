@@ -3,15 +3,28 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettings } from "@/lib/site-settings";
+import { absoluteUrl } from "@/lib/seo";
 import SiteHeader from "@/components/SiteHeader";
 
 type Props = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const category = await prisma.category.findUnique({ where: { slug } });
+  const category = await prisma.category.findUnique({
+    where: { slug },
+    include: { _count: { select: { videos: true } } },
+  });
   if (!category) return {};
-  return { title: `${category.name} — Videos` };
+
+  const title = `${category.name} — Videos`;
+  const description = `Watch ${category._count.videos} ${category.name} video${category._count.videos === 1 ? "" : "s"}. Browse the full catalog and find your next favorite.`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: absoluteUrl(`/categoria/${slug}`) },
+    openGraph: { title, description, url: absoluteUrl(`/categoria/${slug}`) },
+  };
 }
 
 export default async function CategoryPage({ params }: Props) {

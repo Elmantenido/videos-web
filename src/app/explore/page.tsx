@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getHomeData } from "@/lib/home-data";
+import { absoluteUrl } from "@/lib/seo";
 import TrendingSection from "@/components/TrendingSection";
 import CatalogSection from "@/components/CatalogSection";
 import RandomVideosSection from "@/components/RandomVideosSection";
@@ -10,7 +11,14 @@ import HomeHeader from "@/components/HomeHeader";
 export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
-  return { title: "Explore" };
+  const title = "Explore the catalog";
+  const description = "Browse the latest videos, random picks, categories, and trending content.";
+  return {
+    title,
+    description,
+    alternates: { canonical: absoluteUrl("/explore") },
+    openGraph: { title, description, url: absoluteUrl("/explore") },
+  };
 }
 
 export default async function ExplorePage() {

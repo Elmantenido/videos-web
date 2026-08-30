@@ -1,10 +1,7 @@
 import type { MetadataRoute } from "next";
+import { siteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
-
-function siteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-}
 
 export default function robots(): MetadataRoute.Robots {
   return {
