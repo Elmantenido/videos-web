@@ -28,6 +28,44 @@ function formatReleasedDate(date: Date) {
   return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
+function extractTrailingNumber(title: string): number | null {
+  const match = title.match(/(\d+)\s*$/);
+  return match ? Number(match[1]) : null;
+}
+
+/**
+ * Orders same-series siblings for "Up next" starting right after the
+ * episode you're currently watching, wrapping back around to the earlier
+ * ones at the end (e.g. watching "Name 2" of a 1-4 series -> 3, 4, 1).
+ */
+function orderSeriesForUpNext<T extends { title: string }>(currentTitle: string, siblings: T[]): T[] {
+  const currentNum = extractTrailingNumber(currentTitle);
+  if (currentNum === null) return siblings;
+
+  const after: T[] = [];
+  const wrapped: T[] = [];
+
+  for (const sibling of siblings) {
+    const n = extractTrailingNumber(sibling.title);
+    if (n !== null && n > currentNum) after.push(sibling);
+    else wrapped.push(sibling);
+  }
+
+  const byNumberAsc = (a: T, b: T) => {
+    const na = extractTrailingNumber(a.title);
+    const nb = extractTrailingNumber(b.title);
+    if (na === null && nb === null) return a.title.localeCompare(b.title);
+    if (na === null) return 1;
+    if (nb === null) return -1;
+    return na - nb;
+  };
+
+  after.sort(byNumberAsc);
+  wrapped.sort(byNumberAsc);
+
+  return [...after, ...wrapped];
+}
+
 type RelatedVideo = {
   id: number;
   slug: string;
@@ -144,7 +182,6 @@ export default async function VideoPage({ params }: Props) {
       ? prisma.video.findMany({
           where: { published: true, NOT: { id: video.id }, title: { contains: seriesBaseTitle } },
           orderBy: { title: "asc" },
-          take: 5,
         })
       : Promise.resolve([]),
     categoryIds.length
@@ -160,7 +197,7 @@ export default async function VideoPage({ params }: Props) {
       : Promise.resolve([]),
   ]);
 
-  const upNext = seriesMatches;
+  const upNext = orderSeriesForUpNext(video.title, seriesMatches).slice(0, 5);
   const usedIds = new Set([video.id, ...upNext.map((v) => v.id)]);
   const related = categoryMatches.filter((v) => !usedIds.has(v.id)).slice(0, 8);
 
