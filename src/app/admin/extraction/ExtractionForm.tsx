@@ -99,16 +99,10 @@ export default function ExtractionForm() {
             </div>
           </div>
 
-          {data.embedUrl ? (
-            <p className="mt-3 truncate text-xs text-green-600" title={data.embedUrl}>
-              Embed detectado: {data.embedUrl}
-            </p>
-          ) : (
-            <p className="mt-3 text-xs text-amber-600">
-              El enlace del video (embed) no viene incluido por seguridad —
-              deberás pegarlo tú mismo en el siguiente paso.
-            </p>
-          )}
+          <p className="mt-3 text-xs text-amber-600">
+            El enlace del video (embed) no viene incluido por seguridad —
+            deberás pegarlo tú mismo en el siguiente paso.
+          </p>
 
           <button
             onClick={useThisData}
