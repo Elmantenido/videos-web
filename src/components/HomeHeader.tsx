@@ -24,7 +24,7 @@ export default function HomeHeader({
       <div className="topbar-start">
         <SidebarNav />
         <Link href="/" className="brand" aria-label={`${brandPrefix}${brandSuffix} home`}>
-          <span className="brand-mark">{brandPrefix.charAt(0)}</span>
+          <span className="brand-mark"><span>{brandPrefix.charAt(0)}</span></span>
           <span>{brandPrefix}<span>{brandSuffix}</span></span>
         </Link>
         <nav className="main-nav" aria-label="Main navigation">
