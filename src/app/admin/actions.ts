@@ -382,45 +382,6 @@ function extractPosterImageUrlByAlt(html: string): string | null {
   return src ? src[1] : null;
 }
 
-/**
- * The player's own JW Player config often obfuscates its "file" URL as an
- * anti-scraping measure, but the same page's schema.org VideoObject JSON-LD
- * (there for SEO) usually carries the real, unobfuscated contentUrl/embedUrl
- * right next to it — no need to decrypt anything or run JavaScript.
- */
-function extractVideoUrlFromJsonLd(html: string): string | null {
-  for (const match of html.matchAll(
-    /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
-  )) {
-    let json: Record<string, unknown>;
-    try {
-      json = JSON.parse(match[1]);
-    } catch {
-      continue;
-    }
-    const type = json["@type"];
-    const isVideoObject = type === "VideoObject" || (Array.isArray(type) && type.includes("VideoObject"));
-    if (!isVideoObject) continue;
-
-    const url =
-      (typeof json.embedUrl === "string" ? json.embedUrl : null) ??
-      (typeof json.contentUrl === "string" ? json.contentUrl : null);
-    if (url) return url;
-  }
-  return null;
-}
-
-function extractVideoSrc(html: string): string | null {
-  // JW Player-style markup: <div class="jw-media jw-reset">
-  //   <video class="jw-video jw-reset" ... src="https://..."></video>
-  // Falls back to any <video src="..."> for sources that don't use JW Player.
-  const scoped = html.match(/<video\b(?=[^>]*\bclass=["'][^"']*\bjw-video\b)[^>]*>/i)?.[0];
-  const tag = scoped ?? html.match(/<video\b[^>]*\bsrc=["'][^"']+["'][^>]*>/i)?.[0];
-  if (!tag) return null;
-  const src = tag.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
-  return src ? decodeHtmlEntities(src[1]) : null;
-}
-
 function extractPosterImageUrl(html: string): string | null {
   // Fallback for sources without the "Video poster" alt marker: some posters
   // are lazy-loaded, so the real URL can live in a data-* attribute while src
@@ -462,7 +423,7 @@ function browserHeaders(referer?: string): HeadersInit {
   };
 }
 
-export async function extractFromUrl(url: string, videoUrl?: string) {
+export async function extractFromUrl(url: string) {
   await requireAuth();
 
   let target: URL;
@@ -515,43 +476,11 @@ export async function extractFromUrl(url: string, videoUrl?: string) {
 
   const previewImages = extractPreviewImageUrls(html);
 
-  let embedUrl = "";
-  let videoNote: string | null = null;
-  if (videoUrl?.trim()) {
-    let videoTarget: URL | null = null;
-    try {
-      videoTarget = new URL(videoUrl.trim());
-    } catch {
-      videoNote = "Esa URL de video no es válida.";
-    }
-
-    if (videoTarget) {
-      try {
-        const videoRes = await fetch(videoTarget.toString(), {
-          cache: "no-store",
-          headers: browserHeaders(target.toString()),
-        });
-        if (!videoRes.ok) {
-          videoNote = `No se pudo abrir la URL de video (${videoRes.status}).`;
-        } else {
-          const videoHtml = await videoRes.text();
-          embedUrl = extractVideoUrlFromJsonLd(videoHtml) ?? extractVideoSrc(videoHtml) ?? "";
-          if (!embedUrl) {
-            videoNote = "Se abrió la URL de video, pero no se encontró un enlace reconocible ahí.";
-          }
-        }
-      } catch {
-        videoNote = "No se pudo conectar con la URL de video.";
-      }
-    }
-  }
-
   return {
     data: {
       title: decodeHtmlEntities(title),
       description,
-      embedUrl,
-      videoNote,
+      embedUrl: "",
       thumbnail,
       backgroundImage: extractPosterImageUrlByAlt(html) ?? extractPosterImageUrl(html),
       duration: extractDuration(html),
