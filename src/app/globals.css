@@ -73,7 +73,10 @@ em { color: var(--lime); font-family: Georgia, serif; font-style: italic; font-w
 .hero-index { bottom: 32px; color: var(--lime); font-size: 12px; position: absolute; right: 4%; z-index: 1; }
 .hero-index span { color: #6a6c66; margin: 0 8px; }
 .category-strip { align-items: end; border-bottom: 1px solid var(--line); display: flex; gap: 35px; justify-content: space-between; padding: 70px 0 38px; }
-.category-strip h2, .section-heading h2 { font-size: 28px; font-weight: 500; letter-spacing: -.04em; margin: 0; }
+.category-strip h2 { font-size: 28px; font-weight: 500; letter-spacing: -.04em; margin: 0; }
+/* Latest/New Releases/Random/Trending headings — bigger and in the theme's
+   accent color so each video-list section reads clearly at a glance. */
+.section-heading h2 { color: var(--lime); font-size: clamp(28px, 4vw, 38px); font-weight: 500; letter-spacing: -.04em; margin: 0; }
 .category-links { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .category-strip-centered { flex-direction: column; align-items: center; text-align: center; }
 .category-strip-centered .section-kicker { text-align: center; }
