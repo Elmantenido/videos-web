@@ -27,6 +27,23 @@ export default async function HomePage() {
 
   const contentSections = (
     <>
+      <NewReleasesSection
+        videos={newReleases}
+        kicker={s.new_releases_kicker}
+        title={s.new_releases_title}
+        brandPrefix={s.brand_prefix}
+        brandSuffix={s.brand_suffix}
+      />
+
+      <TrendingSection
+        initialRange="month"
+        initialVideos={trending}
+        kicker={s.trending_kicker}
+        title={s.trending_title}
+        brandPrefix={s.brand_prefix}
+        brandSuffix={s.brand_suffix}
+      />
+
       <CatalogSection
         videos={latestVideos}
         totalVideos={totalVideos}
@@ -35,14 +52,6 @@ export default async function HomePage() {
         titleEmphasis={s.catalog_title_emphasis}
         viewAllLabel={s.catalog_view_all}
         emptyStateText={s.catalog_empty_state}
-        brandPrefix={s.brand_prefix}
-        brandSuffix={s.brand_suffix}
-      />
-
-      <NewReleasesSection
-        videos={newReleases}
-        kicker={s.new_releases_kicker}
-        title={s.new_releases_title}
         brandPrefix={s.brand_prefix}
         brandSuffix={s.brand_suffix}
       />
@@ -63,15 +72,6 @@ export default async function HomePage() {
         titleEmphasis={s.categories_title_emphasis}
         pillAllLabel={s.category_pill_all}
         centered
-      />
-
-      <TrendingSection
-        initialRange="month"
-        initialVideos={trending}
-        kicker={s.trending_kicker}
-        title={s.trending_title}
-        brandPrefix={s.brand_prefix}
-        brandSuffix={s.brand_suffix}
       />
     </>
   );
