@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 
 export type SettingField = {
@@ -122,8 +123,11 @@ export const DEFAULT_SETTINGS: Record<string, string> = Object.fromEntries(
   [...SETTING_GROUPS.flatMap((group) => group.fields), ...SEO_FIELDS].map((f) => [f.key, f.default])
 );
 
-export async function getSiteSettings(): Promise<Record<string, string>> {
+// Wrapped in React's cache() so multiple calls within the same request
+// (e.g. a layout's generateMetadata + its component render) share one
+// query instead of hitting the database twice per request.
+export const getSiteSettings = cache(async (): Promise<Record<string, string>> => {
   const rows = await prisma.siteSetting.findMany();
   const overrides = Object.fromEntries(rows.map((r) => [r.key, r.value]));
   return { ...DEFAULT_SETTINGS, ...overrides };
-}
+});

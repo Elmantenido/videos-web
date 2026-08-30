@@ -1,20 +1,22 @@
 import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getVideoListing } from "@/lib/video-listing";
-import { absoluteUrl } from "@/lib/seo";
+import { paginatedCanonical } from "@/lib/seo";
 import SiteHeader from "@/components/SiteHeader";
 import VideoGridSection from "@/components/VideoGridSection";
 
 type Props = { searchParams: Promise<{ page?: string }> };
 
-export async function generateMetadata(): Promise<Metadata> {
-  const title = "Recent Uploads";
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
+  const title = page > 1 ? `Recent Uploads — Page ${page}` : "Recent Uploads";
   const description = "Every video, sorted by the date it was uploaded.";
   return {
     title,
     description,
-    alternates: { canonical: absoluteUrl("/recent-uploads") },
-    openGraph: { title, description, url: absoluteUrl("/recent-uploads") },
+    alternates: { canonical: paginatedCanonical("/recent-uploads", page) },
+    openGraph: { title, description, url: paginatedCanonical("/recent-uploads", page) },
   };
 }
 

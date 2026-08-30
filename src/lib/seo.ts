@@ -6,6 +6,16 @@ export function absoluteUrl(path: string): string {
   return `${siteUrl()}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
+/**
+ * Canonical for a paginated listing page. Page 1 canonicalizes to the bare
+ * path; page 2+ canonicalizes to itself (not back to page 1) so Google can
+ * discover and index each page's distinct set of videos instead of treating
+ * them as duplicates of page 1.
+ */
+export function paginatedCanonical(path: string, page: number): string {
+  return page > 1 ? absoluteUrl(`${path}?page=${page}`) : absoluteUrl(path);
+}
+
 /** Converts a "MM:SS" or "H:MM:SS" duration string to ISO 8601 (e.g. "PT16M"). */
 export function toIsoDuration(value: string | null): string | undefined {
   if (!value) return undefined;

@@ -117,7 +117,7 @@ export default function VideoCarousel({
           ref={trackRef}
           style={{ transform: `translateX(-${startIndex * stepPx}px)` }}
         >
-          {videos.map((video) => (
+          {videos.map((video, i) => (
             <Link
               key={video.id}
               href={`/video/${video.slug}`}
@@ -126,7 +126,13 @@ export default function VideoCarousel({
               <div className="thumbnail-wrap">
                 {video.thumbnail ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={video.thumbnail} alt={video.title} />
+                  <img
+                    src={video.thumbnail}
+                    alt={video.title}
+                    width={300}
+                    height={450}
+                    loading={i === 0 ? "eager" : "lazy"}
+                  />
                 ) : (
                   <div className="no-thumbnail">{brandPrefix}{brandSuffix}</div>
                 )}

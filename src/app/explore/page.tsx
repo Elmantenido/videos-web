@@ -38,6 +38,8 @@ export default async function ExplorePage() {
           activeTab="explore"
         />
 
+        <h1 className="sr-only">Explore the catalog</h1>
+
         <CategoriesSection
           categories={categories}
           totalVideos={totalVideos}

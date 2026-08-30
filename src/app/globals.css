@@ -86,7 +86,7 @@ em { color: var(--lime); font-family: Georgia, serif; font-style: italic; font-w
 .category-strip h2 { font-size: 28px; font-weight: 500; letter-spacing: -.04em; margin: 0; }
 /* Latest/New Releases/Random/Trending headings — bigger and in the theme's
    accent color so each video-list section reads clearly at a glance. */
-.section-heading h2 { color: var(--lime); font-size: clamp(28px, 4vw, 38px); font-weight: 500; letter-spacing: -.04em; margin: 0; }
+.section-heading h1, .section-heading h2 { color: var(--lime); font-size: clamp(28px, 4vw, 38px); font-weight: 500; letter-spacing: -.04em; margin: 0; }
 .category-links { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 .category-strip-centered { flex-direction: column; align-items: center; text-align: center; }
 .category-strip-centered .section-kicker { text-align: center; }

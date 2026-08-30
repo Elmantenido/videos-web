@@ -50,7 +50,7 @@ export default async function CategoryPage({ params }: Props) {
       <h1 className="mt-2 mb-6 text-3xl font-bold">{category.name}</h1>
 
       <section className="grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-6">
-        {videos.map((video) => (
+        {videos.map((video, i) => (
           <Link
             key={video.id}
             href={`/video/${video.slug}`}
@@ -62,6 +62,9 @@ export default async function CategoryPage({ params }: Props) {
                 <img
                   src={video.thumbnail}
                   alt={video.title}
+                  width={300}
+                  height={450}
+                  loading={i === 0 ? "eager" : "lazy"}
                   className="h-full w-full object-cover transition group-hover:scale-105"
                 />
               )}

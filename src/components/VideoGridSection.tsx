@@ -43,18 +43,24 @@ export default function VideoGridSection({
       <div className="section-heading">
         <div>
           <p className="section-kicker">{kicker}</p>
-          <h2>{title}</h2>
+          <h1>{title}</h1>
         </div>
         <Link href="/" className="view-all">Back to home <span>→</span></Link>
       </div>
 
       <div className="catalog-grid">
-        {videos.map((video) => (
+        {videos.map((video, i) => (
           <Link key={video.id} href={`/video/${video.slug}`} className="video-card">
             <div className="thumbnail-wrap">
               {video.thumbnail ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={video.thumbnail} alt={video.title} />
+                <img
+                  src={video.thumbnail}
+                  alt={video.title}
+                  width={300}
+                  height={450}
+                  loading={i === 0 ? "eager" : "lazy"}
+                />
               ) : (
                 <div className="no-thumbnail">{brandPrefix}{brandSuffix}</div>
               )}

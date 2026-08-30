@@ -68,7 +68,7 @@ export default function TrendingSection({ initialRange, initialVideos, title, ki
               <span className="trending-thumb">
                 {video.thumbnail ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={video.thumbnail} alt={video.title} />
+                  <img src={video.thumbnail} alt={video.title} width={46} height={69} loading="lazy" />
                 ) : null}
               </span>
               <span className="trending-info">

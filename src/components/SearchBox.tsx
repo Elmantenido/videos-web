@@ -97,7 +97,7 @@ export default function SearchBox() {
                 <span className="search-preview-thumb">
                   {video.thumbnail ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={video.thumbnail} alt={video.title} />
+                    <img src={video.thumbnail} alt={video.title} width={34} height={51} loading="lazy" />
                   ) : null}
                 </span>
                 <span className="search-preview-name">{video.title}</span>

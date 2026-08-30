@@ -58,12 +58,18 @@ export default async function SearchPage({ searchParams }: Props) {
           </div>
 
           <div className="catalog-grid">
-            {videos.map((video) => (
+            {videos.map((video, i) => (
               <Link key={video.id} href={`/video/${video.slug}`} className="video-card">
                 <div className="thumbnail-wrap">
                   {video.thumbnail ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={video.thumbnail} alt={video.title} />
+                    <img
+                      src={video.thumbnail}
+                      alt={video.title}
+                      width={300}
+                      height={450}
+                      loading={i === 0 ? "eager" : "lazy"}
+                    />
                   ) : (
                     <div className="no-thumbnail">{s.brand_prefix}{s.brand_suffix}</div>
                   )}

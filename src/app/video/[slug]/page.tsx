@@ -49,6 +49,9 @@ function RelatedVideoRow({ video }: { video: RelatedVideo }) {
           <img
             src={video.thumbnail}
             alt={video.title}
+            width={200}
+            height={300}
+            loading="lazy"
             className="h-full w-full object-cover"
           />
         )}
@@ -73,6 +76,9 @@ function UpNextCard({ video }: { video: RelatedVideo }) {
         <img
           src={poster}
           alt={video.title}
+          width={640}
+          height={360}
+          loading="lazy"
           className="h-full w-full object-cover transition group-hover:scale-105"
         />
       )}
@@ -232,6 +238,9 @@ export default async function VideoPage({ params }: Props) {
               <img
                 src={video.thumbnail}
                 alt={video.title}
+                width={200}
+                height={300}
+                loading="eager"
                 className="aspect-[2/3] w-28 flex-shrink-0 self-start rounded object-cover"
               />
             )}
@@ -334,6 +343,9 @@ export default async function VideoPage({ params }: Props) {
               key={src}
               src={src}
               alt={`${video.title} — captura ${i + 1}`}
+              width={450}
+              height={500}
+              loading="lazy"
               className="aspect-[9/10] w-full rounded object-cover"
             />
           ))}
