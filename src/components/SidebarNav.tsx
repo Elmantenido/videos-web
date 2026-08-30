@@ -7,7 +7,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Home" },
   { href: "/recent-uploads", label: "Recent Uploads" },
   { href: "/new-releases", label: "New Releases" },
-  { href: "/#random", label: "Random" },
+  { href: "/random", label: "Random" },
   { href: "/#trending", label: "Trending" },
   { href: "/videos", label: "All Videos" },
   { href: "/explore", label: "Explore" },

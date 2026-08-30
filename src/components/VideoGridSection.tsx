@@ -19,12 +19,16 @@ type Props = {
   page: number;
   totalPages: number;
   basePath: string;
+  extraQuery?: string;
   brandPrefix: string;
   brandSuffix: string;
 };
 
-function pageHref(basePath: string, page: number) {
-  return page === 1 ? basePath : `${basePath}?page=${page}`;
+function pageHref(basePath: string, page: number, extraQuery?: string) {
+  const params = new URLSearchParams(extraQuery);
+  if (page > 1) params.set("page", String(page));
+  const qs = params.toString();
+  return qs ? `${basePath}?${qs}` : basePath;
 }
 
 export default function VideoGridSection({
@@ -35,6 +39,7 @@ export default function VideoGridSection({
   page,
   totalPages,
   basePath,
+  extraQuery,
   brandPrefix,
   brandSuffix,
 }: Props) {
@@ -84,11 +89,11 @@ export default function VideoGridSection({
       {totalPages > 1 && (
         <div className="pagination">
           {page > 1 && (
-            <Link href={pageHref(basePath, page - 1)} className="pagination-arrow">← Previous</Link>
+            <Link href={pageHref(basePath, page - 1, extraQuery)} className="pagination-arrow">← Previous</Link>
           )}
           <span className="pagination-status">Page {page} of {totalPages}</span>
           {page < totalPages && (
-            <Link href={pageHref(basePath, page + 1)} className="pagination-arrow">Next →</Link>
+            <Link href={pageHref(basePath, page + 1, extraQuery)} className="pagination-arrow">Next →</Link>
           )}
         </div>
       )}
