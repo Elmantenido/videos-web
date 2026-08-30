@@ -33,10 +33,24 @@ export function verifySessionToken(token: string | undefined): boolean {
   return Number(expires) > Date.now();
 }
 
+/** Constant-time string compare so a login attempt can't be timed
+ * character-by-character to guess the username/password. */
+function safeCompare(a: string, b: string): boolean {
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    // Still do a comparison of equal length so a length mismatch doesn't
+    // return measurably faster than a same-length mismatch.
+    timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return timingSafeEqual(bufA, bufB);
+}
+
 export function checkCredentials(username: string, password: string) {
   return (
-    username === process.env.ADMIN_USERNAME &&
-    password === process.env.ADMIN_PASSWORD
+    safeCompare(username, process.env.ADMIN_USERNAME ?? "") &&
+    safeCompare(password, process.env.ADMIN_PASSWORD ?? "")
   );
 }
 

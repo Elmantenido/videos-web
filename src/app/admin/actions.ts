@@ -1,7 +1,8 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { rateLimit } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slugify";
@@ -38,6 +39,16 @@ function parseNames(raw: FormDataEntryValue | null): string[] {
 }
 
 export async function login(_prevState: string | null, formData: FormData) {
+  const reqHeaders = await headers();
+  const ip =
+    reqHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    reqHeaders.get("x-real-ip") ||
+    "unknown";
+
+  if (!rateLimit(`login:${ip}`, 10, 10 * 60 * 1000)) {
+    return "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.";
+  }
+
   const username = String(formData.get("username") ?? "");
   const password = String(formData.get("password") ?? "");
 

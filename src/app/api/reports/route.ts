@@ -4,9 +4,12 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const videoId = Number(body.videoId);
-  const message = String(body.message ?? "").trim();
-  const contactEmail = String(body.contactEmail ?? "").trim();
-  const diagnostics = body.diagnostics ? JSON.stringify(body.diagnostics) : null;
+  // This is a public, unauthenticated endpoint -- cap every field before it
+  // reaches the database so a crafted request can't bloat storage with a
+  // handful of oversized rows.
+  const message = String(body.message ?? "").trim().slice(0, 5000);
+  const contactEmail = String(body.contactEmail ?? "").trim().slice(0, 200);
+  const diagnostics = body.diagnostics ? JSON.stringify(body.diagnostics).slice(0, 2000) : null;
 
   if (!videoId || Number.isNaN(videoId) || !message) {
     return NextResponse.json(

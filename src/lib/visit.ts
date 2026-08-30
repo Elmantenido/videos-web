@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { lookupCountry } from "@/lib/geo";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
@@ -36,10 +36,15 @@ export async function ensureVisit(req: NextRequest, res: NextResponse) {
   const id = crypto.randomUUID();
   const ip = clientIp(req);
   const referrer = req.headers.get("referer") || null;
-  const country = await lookupCountry(ip);
 
+  // Create the row with country: null first so the response never waits on
+  // the outbound geo-IP lookup below. Every request without a valid visit
+  // cookie used to block here on a third-party HTTP call (up to 2s, plus
+  // that API's own rate limit) before it could even get a Set-Cookie back
+  // -- a flood of cookie-less requests would turn that into a slow-request
+  // denial-of-service against this server itself, not just a UX hiccup.
   await prisma.visit.create({
-    data: { id, landingPage: pathname, referrer, country, isAdmin },
+    data: { id, landingPage: pathname, referrer, country: null, isAdmin },
   });
 
   res.cookies.set(VISIT_COOKIE, id, {
@@ -47,5 +52,12 @@ export async function ensureVisit(req: NextRequest, res: NextResponse) {
     path: "/",
     httpOnly: true,
     sameSite: "lax",
+  });
+
+  after(async () => {
+    const country = await lookupCountry(ip);
+    if (country) {
+      await prisma.visit.update({ where: { id }, data: { country } }).catch(() => {});
+    }
   });
 }
