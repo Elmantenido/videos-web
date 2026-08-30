@@ -11,6 +11,55 @@ import ReportProblemButton from "@/components/ReportProblemButton";
 
 type Props = { params: Promise<{ slug: string }> };
 
+function formatDurationMinutes(duration: string | null): string | null {
+  if (!duration) return null;
+  const parts = duration.split(":").map(Number);
+  if (parts.some((p) => !Number.isFinite(p))) return duration;
+
+  let totalSeconds: number;
+  if (parts.length === 2) totalSeconds = parts[0] * 60 + parts[1];
+  else if (parts.length === 3) totalSeconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+  else return duration;
+
+  return `${Math.round(totalSeconds / 60)} MIN`;
+}
+
+function formatReleasedDate(date: Date) {
+  return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+
+type RelatedVideo = {
+  id: number;
+  slug: string;
+  title: string;
+  thumbnail: string | null;
+  views: number;
+};
+
+function RelatedVideoRow({ video }: { video: RelatedVideo }) {
+  return (
+    <Link
+      href={`/video/${video.slug}`}
+      className="flex gap-3 rounded p-1 transition-colors hover:bg-white/5"
+    >
+      <div className="aspect-[2/3] w-20 flex-shrink-0 overflow-hidden rounded bg-white/10">
+        {video.thumbnail && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={video.thumbnail}
+            alt={video.title}
+            className="h-full w-full object-cover"
+          />
+        )}
+      </div>
+      <div className="min-w-0">
+        <p className="line-clamp-3 text-sm text-gray-200">{video.title}</p>
+        <p className="mt-1 text-xs text-gray-500">{video.views.toLocaleString()} views</p>
+      </div>
+    </Link>
+  );
+}
+
 async function getVideo(slug: string) {
   return prisma.video.findUnique({
     where: { slug, published: true },
@@ -53,16 +102,34 @@ export default async function VideoPage({ params }: Props) {
 
   const categoryIds = video.categories.map((c) => c.id);
 
-  const related = await prisma.video.findMany({
-    where: {
-      published: true,
-      ...(categoryIds.length
-        ? { categories: { some: { id: { in: categoryIds } } } }
-        : {}),
-      NOT: { id: video.id },
-    },
-    take: 8,
-  });
+  // Strip a trailing "Episode N" / "Ep N" / plain "N" so sequels/episodes of
+  // the same series (e.g. "So low 3" -> "So low") surface as "Up next" first.
+  const seriesBaseTitle = video.title.replace(/\s*(?:episode|ep\.?)?\s*\d+\s*$/i, "").trim();
+
+  const [seriesMatches, categoryMatches] = await Promise.all([
+    seriesBaseTitle.length >= 3
+      ? prisma.video.findMany({
+          where: { published: true, NOT: { id: video.id }, title: { contains: seriesBaseTitle } },
+          orderBy: { title: "asc" },
+          take: 5,
+        })
+      : Promise.resolve([]),
+    categoryIds.length
+      ? prisma.video.findMany({
+          where: {
+            published: true,
+            NOT: { id: video.id },
+            categories: { some: { id: { in: categoryIds } } },
+          },
+          orderBy: { views: "desc" },
+          take: 10,
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const upNext = seriesMatches;
+  const usedIds = new Set([video.id, ...upNext.map((v) => v.id)]);
+  const related = categoryMatches.filter((v) => !usedIds.has(v.id)).slice(0, 8);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -84,19 +151,19 @@ export default async function VideoPage({ params }: Props) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
-      ...(video.categories[0]
+      ...(video.studio
         ? [
             {
               "@type": "ListItem",
               position: 2,
-              name: video.categories[0].name,
-              item: absoluteUrl(`/categoria/${video.categories[0].slug}`),
+              name: video.studio,
+              item: absoluteUrl(`/search?q=${encodeURIComponent(video.studio)}`),
             },
           ]
         : []),
       {
         "@type": "ListItem",
-        position: video.categories[0] ? 3 : 2,
+        position: video.studio ? 3 : 2,
         name: video.title,
         item: absoluteUrl(`/video/${video.slug}`),
       },
@@ -109,16 +176,16 @@ export default async function VideoPage({ params }: Props) {
       <div className="mx-auto max-w-6xl px-4 py-8">
       <nav aria-label="Breadcrumb" className="text-sm text-gray-500">
         <Link href="/" className="hover:underline">Home</Link>
-        {video.categories[0] && (
+        {video.studio && (
           <>
             {" / "}
-            <Link href={`/categoria/${video.categories[0].slug}`} className="hover:underline">
-              {video.categories[0].name}
+            <Link href={`/search?q=${encodeURIComponent(video.studio)}`} className="hover:underline">
+              {video.studio}
             </Link>
           </>
         )}
         {" / "}
-        <span className="text-gray-700">{video.title}</span>
+        <span className="text-gray-300">{video.title}</span>
       </nav>
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -131,65 +198,104 @@ export default async function VideoPage({ params }: Props) {
             />
           </div>
           <h1 className="mt-4 text-2xl font-bold">{video.title}</h1>
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
-            {video.studio && <span>{video.studio}</span>}
-            {video.releasedAt && (
-              <span>
-                Released{" "}
-                {video.releasedAt.toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </span>
+
+          <div className="mt-4 flex flex-col gap-4 rounded-lg border border-white/10 p-4 sm:flex-row">
+            {video.thumbnail && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={video.thumbnail}
+                alt={video.title}
+                className="aspect-[2/3] w-28 flex-shrink-0 self-start rounded object-cover"
+              />
             )}
-            {video.duration && <span>{video.duration}</span>}
-            <span>{video.views.toLocaleString()} views</span>
+            <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+              {video.studio && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Estudio
+                  </p>
+                  <p className="mt-0.5 font-semibold text-[var(--lime)]">{video.studio}</p>
+                </div>
+              )}
+              {video.duration && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Duración
+                  </p>
+                  <p className="mt-0.5 font-semibold text-gray-100">
+                    {formatDurationMinutes(video.duration)}
+                  </p>
+                </div>
+              )}
+              {video.releasedAt && (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Released
+                  </p>
+                  <p className="mt-0.5 font-semibold text-gray-100">
+                    {formatReleasedDate(video.releasedAt)}
+                  </p>
+                </div>
+              )}
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                  Views
+                </p>
+                <p className="mt-0.5 font-semibold text-gray-100">
+                  {video.views.toLocaleString()}
+                </p>
+              </div>
+            </div>
           </div>
+
           {video.categories.length > 0 && (
-            <div className="mt-1 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               {video.categories.map((category) => (
                 <Link
                   key={category.id}
                   href={`/categoria/${category.slug}`}
-                  className="text-sm text-blue-600 hover:underline"
+                  className="rounded-full border border-white/15 px-4 py-1.5 text-sm text-gray-300 transition-colors hover:border-[var(--lime)] hover:text-[var(--lime)]"
                 >
                   {category.name}
                 </Link>
               ))}
             </div>
           )}
+
           {video.description && (
-            <p className="mt-3 text-gray-700">{video.description}</p>
+            <div className="mt-6 border-t border-white/10 pt-4">
+              <h2 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Description
+              </h2>
+              <p className="leading-relaxed text-gray-300">{video.description}</p>
+            </div>
           )}
+
           <ReportProblemButton videoId={video.id} />
         </div>
 
-        <aside>
-          <h2 className="mb-3 text-sm font-semibold text-gray-500">
-            Related
-          </h2>
-          <div className="flex flex-col gap-3">
-            {related.map((r) => (
-              <Link
-                key={r.id}
-                href={`/video/${r.slug}`}
-                className="flex gap-2 rounded hover:bg-gray-50"
-              >
-                <div className="h-16 w-28 flex-shrink-0 overflow-hidden rounded bg-gray-100">
-                  {r.thumbnail && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={r.thumbnail}
-                      alt={r.title}
-                      className="h-full w-full object-cover"
-                    />
-                  )}
-                </div>
-                <span className="line-clamp-2 text-sm">{r.title}</span>
-              </Link>
-            ))}
-          </div>
+        <aside className="flex flex-col gap-6">
+          {upNext.length > 0 && (
+            <div>
+              <h2 className="mb-3 text-sm font-semibold text-gray-400">Up next</h2>
+              <div className="flex flex-col gap-2">
+                {upNext.map((r) => (
+                  <RelatedVideoRow key={r.id} video={r} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {related.length > 0 && (
+            <div>
+              <h2 className="mb-3 text-sm font-semibold text-gray-400">Related</h2>
+              <div className="flex flex-col gap-2">
+                {related.map((r) => (
+                  <RelatedVideoRow key={r.id} video={r} />
+                ))}
+              </div>
+            </div>
+          )}
         </aside>
       </div>
 

@@ -59,7 +59,7 @@ export default function ReportProblemButton({ videoId }: { videoId: number }) {
       <button
         type="button"
         onClick={openModal}
-        className="mt-2 text-sm text-gray-500 underline hover:text-gray-700"
+        className="mt-6 inline-flex items-center gap-2 rounded border border-white/15 px-4 py-2 text-sm font-medium text-gray-300 transition-colors hover:border-white/30 hover:bg-white/5"
       >
         Report a problem
       </button>
