@@ -365,6 +365,24 @@ function extractDuration(html: string): string | null {
   return match ? `${match[1]}:00` : null;
 }
 
+function extractPosterUrlFromProps(html: string): string | null {
+  // Component islands often ship their data as a `props="{...}"` attribute
+  // (HTML-entity-encoded JSON) for client-side hydration, e.g.:
+  //   props="{&quot;slug&quot;:[0,&quot;x&quot;],&quot;poster_url&quot;:[0,&quot;https://...&quot;]}"
+  // Each value is serialized as [typeTag, actualValue], so poster_url[1] is
+  // the real URL. This is far more reliable than scanning <img> tags, since
+  // it's the one place the site's own code puts the exact poster path.
+  const match = html.match(/\bprops\s*=\s*"([^"]*poster_url[^"]*)"/i);
+  if (!match) return null;
+  try {
+    const json = JSON.parse(decodeHtmlEntities(match[1]));
+    const posterUrl = json?.poster_url;
+    return Array.isArray(posterUrl) && typeof posterUrl[1] === "string" ? posterUrl[1] : null;
+  } catch {
+    return null;
+  }
+}
+
 function extractPosterImageUrlByAlt(html: string): string | null {
   // Neither alt="Video poster" nor eager/high-priority loading is unique on
   // its own — related-video cards can reuse the exact same player component,
@@ -482,7 +500,10 @@ export async function extractFromUrl(url: string) {
       description,
       embedUrl: "",
       thumbnail,
-      backgroundImage: extractPosterImageUrlByAlt(html) ?? extractPosterImageUrl(html),
+      backgroundImage:
+        extractPosterUrlFromProps(html) ??
+        extractPosterImageUrlByAlt(html) ??
+        extractPosterImageUrl(html),
       duration: extractDuration(html),
       studio:
         extractStudioByLabel(html) ??
