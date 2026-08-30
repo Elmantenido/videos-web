@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { resolveAlert, deleteAlert } from "../actions";
+import VerifyAllButton from "@/components/VerifyAllButton";
 
 // No cookies()/headers() are read here, so Next would otherwise be free to
 // prerender this page as static at build time -- serving admins a stale
@@ -20,9 +21,11 @@ export default async function AlertsPage() {
       </Link>
       <h1 className="mb-2 mt-2 text-2xl font-bold">Alertas de reproducción</h1>
       <p className="mb-6 text-sm text-gray-500">
-        Se generan automáticamente cuando el formato del embed de un video no es válido, o al usar
-        &quot;Verificar reproducción&quot; en la edición de un video.
+        Se generan automáticamente cuando el formato del embed de un video no es válido, o al
+        verificar la reproducción de uno o de todos los videos.
       </p>
+
+      <VerifyAllButton />
 
       <div className="flex flex-col gap-4">
         {alerts.map((alert) => (

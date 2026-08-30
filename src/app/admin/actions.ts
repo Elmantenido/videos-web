@@ -6,7 +6,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slugify";
 import { sanitizeEmbedCode } from "@/lib/embed";
-import { validateEmbedFormat, checkEmbedPlayback } from "@/lib/embed-check";
+import { checkEmbedPlayback } from "@/lib/embed-check";
+import { syncAutoEmbedAlert, syncManualPlaybackAlert } from "@/lib/video-alerts";
 import { browserHeaders } from "@/lib/browser-headers";
 import { SETTING_GROUPS, SEO_FIELDS } from "@/lib/site-settings";
 import {
@@ -192,28 +193,6 @@ export async function deleteVideo(videoId: number) {
   revalidatePath("/admin");
 }
 
-/**
- * Runs on every create/update: a fast, offline check of the embed field's
- * format. Owns only "auto"-sourced alerts, so it never clobbers an alert
- * created by the manual "Verificar reproducción" check below.
- */
-async function syncAutoEmbedAlert(videoId: number, embedUrl: string) {
-  const reason = validateEmbedFormat(embedUrl);
-  const existing = await prisma.videoAlert.findFirst({
-    where: { videoId, source: "auto", resolved: false },
-  });
-
-  if (reason) {
-    if (existing) {
-      await prisma.videoAlert.update({ where: { id: existing.id }, data: { reason } });
-    } else {
-      await prisma.videoAlert.create({ data: { videoId, source: "auto", reason } });
-    }
-  } else if (existing) {
-    await prisma.videoAlert.update({ where: { id: existing.id }, data: { resolved: true } });
-  }
-}
-
 /** The "Verificar reproducción" button: actually fetches the embed's
  * playback URL to confirm it's reachable, not just correctly formatted. */
 export async function verifyVideoPlayback(videoId: number): Promise<{ ok: boolean; reason: string }> {
@@ -223,20 +202,7 @@ export async function verifyVideoPlayback(videoId: number): Promise<{ ok: boolea
   if (!video) return { ok: false, reason: "Video no encontrado." };
 
   const result = await checkEmbedPlayback(video.embedUrl);
-
-  const existing = await prisma.videoAlert.findFirst({
-    where: { videoId, source: "manual", resolved: false },
-  });
-
-  if (!result.ok) {
-    if (existing) {
-      await prisma.videoAlert.update({ where: { id: existing.id }, data: { reason: result.reason } });
-    } else {
-      await prisma.videoAlert.create({ data: { videoId, source: "manual", reason: result.reason } });
-    }
-  } else if (existing) {
-    await prisma.videoAlert.update({ where: { id: existing.id }, data: { resolved: true } });
-  }
+  await syncManualPlaybackAlert(videoId, result);
 
   revalidatePath("/admin/alerts");
   return result;
