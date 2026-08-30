@@ -112,15 +112,6 @@ export default function ReportProblemButton({ videoId }: { videoId: number }) {
                   />
                 </label>
 
-                {diagnostics && (
-                  <div className="rounded border bg-gray-50 p-3 text-xs text-gray-500">
-                    <p className="mb-1 font-medium text-gray-600">Diagnostics attached</p>
-                    <p>Viewport: {diagnostics.viewport}</p>
-                    <p>Screen: {diagnostics.screen}</p>
-                    <p>Platform: {diagnostics.platform}</p>
-                  </div>
-                )}
-
                 {status === "error" && (
                   <p className="text-sm text-red-600">
                     Something went wrong. Please try again.
@@ -131,7 +122,7 @@ export default function ReportProblemButton({ videoId }: { videoId: number }) {
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="rounded border px-4 py-2 text-sm hover:bg-gray-50"
+                    className="rounded border px-4 py-2 text-sm text-gray-900 hover:bg-gray-50"
                   >
                     Cancel
                   </button>

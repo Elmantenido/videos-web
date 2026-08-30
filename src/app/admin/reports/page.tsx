@@ -2,6 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { resolveReport, deleteReport } from "../actions";
 
+// No cookies()/headers() are read here, so Next would otherwise be free to
+// prerender this page as static at build time -- serving admins a stale
+// snapshot from the last deploy instead of newly submitted reports.
+export const dynamic = "force-dynamic";
+
 export default async function ReportsPage() {
   const reports = await prisma.report.findMany({
     orderBy: [{ resolved: "asc" }, { createdAt: "desc" }],

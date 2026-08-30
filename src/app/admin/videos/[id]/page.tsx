@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import VideoForm from "../VideoForm";
 import { updateVideo, deleteVideo } from "../../actions";
+import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -54,9 +55,12 @@ export default async function EditVideoPage({ params }: Props) {
         }}
         className="mt-6 border-t pt-6"
       >
-        <button className="text-sm text-red-600 hover:underline">
+        <ConfirmSubmitButton
+          confirmMessage={`¿Seguro que quieres borrar "${video.title}"? Esta acción no se puede deshacer.`}
+          className="text-sm text-red-600 hover:underline"
+        >
           Borrar este video
-        </button>
+        </ConfirmSubmitButton>
       </form>
     </main>
   );
