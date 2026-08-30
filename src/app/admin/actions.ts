@@ -235,7 +235,18 @@ function extractJsonLd(html: string): Record<string, unknown> | null {
   );
   if (!match) return null;
   try {
-    return JSON.parse(match[1]);
+    const parsed = JSON.parse(match[1]);
+    // Some sites bundle VideoObject + BreadcrumbList (etc.) as an array in a
+    // single script tag instead of one object per tag — pick the video one.
+    if (Array.isArray(parsed)) {
+      return (
+        parsed.find((item) => {
+          const type = item?.["@type"];
+          return type === "VideoObject" || (Array.isArray(type) && type.includes("VideoObject"));
+        }) ?? null
+      );
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -494,11 +505,20 @@ export async function extractFromUrl(url: string) {
 
   const previewImages = extractPreviewImageUrls(html);
 
+  // Some sites' VideoObject JSON-LD carries a real third-party player URL in
+  // embedUrl (e.g. an nhplayer.com link) -- but others (like hanime.tv) just
+  // repeat the watch page's own URL there, which would be useless/wrong to
+  // use as the embed. Only trust it when it actually differs from the page's
+  // own url.
+  const jsonLdUrl = typeof jsonLd?.url === "string" ? jsonLd.url : null;
+  const jsonLdEmbedUrl = typeof jsonLd?.embedUrl === "string" ? jsonLd.embedUrl : null;
+  const embedUrl = jsonLdEmbedUrl && jsonLdEmbedUrl !== jsonLdUrl ? jsonLdEmbedUrl : "";
+
   return {
     data: {
       title: decodeHtmlEntities(title),
       description,
-      embedUrl: "",
+      embedUrl,
       thumbnail,
       backgroundImage:
         extractPosterUrlFromProps(html) ??
