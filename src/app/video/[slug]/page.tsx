@@ -33,6 +33,7 @@ type RelatedVideo = {
   slug: string;
   title: string;
   thumbnail: string | null;
+  backgroundImage: string | null;
   views: number;
 };
 
@@ -55,6 +56,32 @@ function RelatedVideoRow({ video }: { video: RelatedVideo }) {
       <div className="min-w-0">
         <p className="line-clamp-3 text-sm text-gray-200">{video.title}</p>
         <p className="mt-1 text-xs text-gray-500">{video.views.toLocaleString()} views</p>
+      </div>
+    </Link>
+  );
+}
+
+function UpNextCard({ video }: { video: RelatedVideo }) {
+  const poster = video.backgroundImage || video.thumbnail;
+  return (
+    <Link
+      href={`/video/${video.slug}`}
+      className="group relative block aspect-video overflow-hidden rounded-lg bg-white/10"
+    >
+      {poster && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={poster}
+          alt={video.title}
+          className="h-full w-full object-cover transition group-hover:scale-105"
+        />
+      )}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 p-3">
+        <p className="line-clamp-2 text-base font-semibold leading-tight text-white">
+          {video.title}
+        </p>
+        <p className="mt-0.5 text-xs text-gray-300">{video.views.toLocaleString()} views</p>
       </div>
     </Link>
   );
@@ -278,9 +305,9 @@ export default async function VideoPage({ params }: Props) {
           {upNext.length > 0 && (
             <div>
               <h2 className="mb-3 text-sm font-semibold text-gray-400">Up next</h2>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-3">
                 {upNext.map((r) => (
-                  <RelatedVideoRow key={r.id} video={r} />
+                  <UpNextCard key={r.id} video={r} />
                 ))}
               </div>
             </div>

@@ -20,16 +20,18 @@ export default function HomeHeader({
 }: Props) {
   return (
     <header className="topbar">
-      <Link href="/" className="brand" aria-label={`${brandPrefix}${brandSuffix} home`}>
-        <span className="brand-mark">{brandPrefix.charAt(0)}</span>
-        <span>{brandPrefix}<span>{brandSuffix}</span></span>
-      </Link>
-      <nav className="main-nav" aria-label="Main navigation">
-        <Link className={activeTab === "home" ? "active" : ""} href="/">{navHome}</Link>
-        <Link className={activeTab === "explore" ? "active" : ""} href="/explore">{navExplore}</Link>
-        <Link href="/explore#categorias">{navCategories}</Link>
-        <Link href="#trending">Trending</Link>
-      </nav>
+      <div className="topbar-start">
+        <Link href="/" className="brand" aria-label={`${brandPrefix}${brandSuffix} home`}>
+          <span className="brand-mark">{brandPrefix.charAt(0)}</span>
+          <span>{brandPrefix}<span>{brandSuffix}</span></span>
+        </Link>
+        <nav className="main-nav" aria-label="Main navigation">
+          <Link className={activeTab === "home" ? "active" : ""} href="/">{navHome}</Link>
+          <Link className={activeTab === "explore" ? "active" : ""} href="/explore">{navExplore}</Link>
+          <Link href="/explore#categorias">{navCategories}</Link>
+          <Link href="#trending">Trending</Link>
+        </nav>
+      </div>
       <div className="top-actions">
         <SearchBox />
       </div>

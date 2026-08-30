@@ -29,7 +29,7 @@ export default function CatalogSection({
     <section id="catalogo" className="catalog-section">
       <div className="section-heading">
         <div><p className="section-kicker">{kicker}</p><h2>{titleLine1} <em>{titleEmphasis}</em></h2></div>
-        <Link href="#catalogo" className="view-all">{viewAllLabel} <span>→</span></Link>
+        <Link href="/videos" className="view-all">{viewAllLabel} <span>→</span></Link>
       </div>
       <VideoCarousel
         mode="latest"
