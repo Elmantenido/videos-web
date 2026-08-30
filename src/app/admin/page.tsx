@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { logout, deleteVideo } from "./actions";
+import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 
 const PAGE_SIZE = 20;
 
@@ -13,7 +14,7 @@ export default async function AdminDashboard({ searchParams }: Props) {
 
   const where = query ? { title: { contains: query } } : {};
 
-  const [videos, total] = await Promise.all([
+  const [videos, total, unresolvedAlerts] = await Promise.all([
     prisma.video.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -22,6 +23,7 @@ export default async function AdminDashboard({ searchParams }: Props) {
       take: PAGE_SIZE,
     }),
     prisma.video.count({ where }),
+    prisma.videoAlert.count({ where: { resolved: false } }),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
@@ -67,6 +69,14 @@ export default async function AdminDashboard({ searchParams }: Props) {
             className="rounded border px-3 py-2 text-sm hover:bg-gray-50"
           >
             Reportes
+          </Link>
+          <Link
+            href="/admin/alerts"
+            className={`rounded border px-3 py-2 text-sm hover:bg-gray-50 ${
+              unresolvedAlerts > 0 ? "border-amber-400 bg-amber-50 text-amber-800" : ""
+            }`}
+          >
+            Alertas{unresolvedAlerts > 0 ? ` (${unresolvedAlerts})` : ""}
           </Link>
           <Link
             href="/admin/search"
@@ -188,9 +198,12 @@ export default async function AdminDashboard({ searchParams }: Props) {
                         await deleteVideo(video.id);
                       }}
                     >
-                      <button className="text-red-600 hover:underline">
+                      <ConfirmSubmitButton
+                        confirmMessage={`¿Seguro que quieres borrar "${video.title}"? Esta acción no se puede deshacer.`}
+                        className="text-red-600 hover:underline"
+                      >
                         Borrar
-                      </button>
+                      </ConfirmSubmitButton>
                     </form>
                   </div>
                 </td>

@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import VideoForm from "../VideoForm";
-import { updateVideo, deleteVideo } from "../../actions";
+import { updateVideo, deleteVideo, verifyVideoPlayback } from "../../actions";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
+import VerifyPlaybackButton from "@/components/VerifyPlaybackButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -19,6 +20,7 @@ export default async function EditVideoPage({ params }: Props) {
   if (!video) notFound();
 
   const boundUpdate = updateVideo.bind(null, video.id);
+  const boundVerify = verifyVideoPlayback.bind(null, video.id);
 
   return (
     <main className="mx-auto max-w-xl px-4 py-10">
@@ -46,6 +48,10 @@ export default async function EditVideoPage({ params }: Props) {
           tagNames: video.tags.map((t) => t.name).join(", "),
         }}
       />
+
+      <div className="mt-6 border-t pt-6">
+        <VerifyPlaybackButton verify={boundVerify} />
+      </div>
 
       <form
         action={async () => {

@@ -6,6 +6,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/slugify";
 import { sanitizeEmbedCode } from "@/lib/embed";
+import { validateEmbedFormat, checkEmbedPlayback } from "@/lib/embed-check";
+import { browserHeaders } from "@/lib/browser-headers";
 import { SETTING_GROUPS, SEO_FIELDS } from "@/lib/site-settings";
 import {
   SESSION_COOKIE,
@@ -121,7 +123,7 @@ export async function createVideo(formData: FormData) {
   const requestedSlug = String(formData.get("slug") ?? "").trim();
   const slug = await ensureUniqueSlug(slugify(requestedSlug || title));
 
-  await prisma.video.create({
+  const video = await prisma.video.create({
     data: {
       title,
       slug,
@@ -138,6 +140,7 @@ export async function createVideo(formData: FormData) {
       tags: { connect: tags },
     },
   });
+  await syncAutoEmbedAlert(video.id, embedUrl);
 
   revalidatePath("/");
   revalidatePath("/admin");
@@ -175,6 +178,7 @@ export async function updateVideo(videoId: number, formData: FormData) {
       tags: { set: tags },
     },
   });
+  await syncAutoEmbedAlert(videoId, embedUrl);
 
   revalidatePath("/");
   revalidatePath("/admin");
@@ -186,6 +190,68 @@ export async function deleteVideo(videoId: number) {
   await prisma.video.delete({ where: { id: videoId } });
   revalidatePath("/");
   revalidatePath("/admin");
+}
+
+/**
+ * Runs on every create/update: a fast, offline check of the embed field's
+ * format. Owns only "auto"-sourced alerts, so it never clobbers an alert
+ * created by the manual "Verificar reproducción" check below.
+ */
+async function syncAutoEmbedAlert(videoId: number, embedUrl: string) {
+  const reason = validateEmbedFormat(embedUrl);
+  const existing = await prisma.videoAlert.findFirst({
+    where: { videoId, source: "auto", resolved: false },
+  });
+
+  if (reason) {
+    if (existing) {
+      await prisma.videoAlert.update({ where: { id: existing.id }, data: { reason } });
+    } else {
+      await prisma.videoAlert.create({ data: { videoId, source: "auto", reason } });
+    }
+  } else if (existing) {
+    await prisma.videoAlert.update({ where: { id: existing.id }, data: { resolved: true } });
+  }
+}
+
+/** The "Verificar reproducción" button: actually fetches the embed's
+ * playback URL to confirm it's reachable, not just correctly formatted. */
+export async function verifyVideoPlayback(videoId: number): Promise<{ ok: boolean; reason: string }> {
+  await requireAuth();
+
+  const video = await prisma.video.findUnique({ where: { id: videoId }, select: { embedUrl: true } });
+  if (!video) return { ok: false, reason: "Video no encontrado." };
+
+  const result = await checkEmbedPlayback(video.embedUrl);
+
+  const existing = await prisma.videoAlert.findFirst({
+    where: { videoId, source: "manual", resolved: false },
+  });
+
+  if (!result.ok) {
+    if (existing) {
+      await prisma.videoAlert.update({ where: { id: existing.id }, data: { reason: result.reason } });
+    } else {
+      await prisma.videoAlert.create({ data: { videoId, source: "manual", reason: result.reason } });
+    }
+  } else if (existing) {
+    await prisma.videoAlert.update({ where: { id: existing.id }, data: { resolved: true } });
+  }
+
+  revalidatePath("/admin/alerts");
+  return result;
+}
+
+export async function resolveAlert(alertId: number) {
+  await requireAuth();
+  await prisma.videoAlert.update({ where: { id: alertId }, data: { resolved: true } });
+  revalidatePath("/admin/alerts");
+}
+
+export async function deleteAlert(alertId: number) {
+  await requireAuth();
+  await prisma.videoAlert.delete({ where: { id: alertId } });
+  revalidatePath("/admin/alerts");
 }
 
 export async function deleteCategory(categoryId: number) {
@@ -430,17 +496,6 @@ function extractPosterImageUrl(html: string): string | null {
  * Referer -- the "video" URL is often only served in full to requests that
  * appear to come from the page that embeds it.
  */
-function browserHeaders(referer?: string): HeadersInit {
-  return {
-    "User-Agent":
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
-    Accept:
-      "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9",
-    ...(referer ? { Referer: referer } : {}),
-  };
-}
-
 export async function extractFromUrl(url: string) {
   await requireAuth();
 

@@ -41,8 +41,22 @@ model Video {
   tags        Tag[]
   viewEvents  VideoView[]
   reports     Report[]
+  alerts      VideoAlert[]
 
   @@index([releasedAt])
+}
+
+model VideoAlert {
+  id        Int      @id @default(autoincrement())
+  videoId   Int
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  reason    String
+  source    String // "auto" (embed format check on save) | "manual" (Verificar reproducción button)
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([videoId, source, resolved])
 }
 
 model Report {
