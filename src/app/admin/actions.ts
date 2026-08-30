@@ -382,6 +382,34 @@ function extractPosterImageUrlByAlt(html: string): string | null {
   return src ? src[1] : null;
 }
 
+/**
+ * The player's own JW Player config often obfuscates its "file" URL as an
+ * anti-scraping measure, but the same page's schema.org VideoObject JSON-LD
+ * (there for SEO) usually carries the real, unobfuscated contentUrl/embedUrl
+ * right next to it — no need to decrypt anything or run JavaScript.
+ */
+function extractVideoUrlFromJsonLd(html: string): string | null {
+  for (const match of html.matchAll(
+    /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi
+  )) {
+    let json: Record<string, unknown>;
+    try {
+      json = JSON.parse(match[1]);
+    } catch {
+      continue;
+    }
+    const type = json["@type"];
+    const isVideoObject = type === "VideoObject" || (Array.isArray(type) && type.includes("VideoObject"));
+    if (!isVideoObject) continue;
+
+    const url =
+      (typeof json.contentUrl === "string" ? json.contentUrl : null) ??
+      (typeof json.embedUrl === "string" ? json.embedUrl : null);
+    if (url) return url;
+  }
+  return null;
+}
+
 function extractVideoSrc(html: string): string | null {
   // JW Player-style markup: <div class="jw-media jw-reset">
   //   <video class="jw-video jw-reset" ... src="https://..."></video>
@@ -475,7 +503,8 @@ export async function extractFromUrl(url: string, videoUrl?: string) {
       const videoTarget = new URL(videoUrl.trim());
       const videoRes = await fetch(videoTarget.toString(), { cache: "no-store" });
       if (videoRes.ok) {
-        embedUrl = extractVideoSrc(await videoRes.text()) ?? "";
+        const videoHtml = await videoRes.text();
+        embedUrl = extractVideoUrlFromJsonLd(videoHtml) ?? extractVideoSrc(videoHtml) ?? "";
       }
     } catch {
       // Leave embedUrl empty — the admin can still paste it manually, same
