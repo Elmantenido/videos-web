@@ -1,6 +1,11 @@
 @import "tailwindcss";
 
 :root {
+  /* The whole site (including /admin) uses a dark background, so tell the
+     browser to render native form controls (date-picker icon, checkboxes,
+     scrollbars) with the light-on-dark variant instead of the default
+     dark-on-transparent one, which is nearly invisible on this background. */
+  color-scheme: dark;
   --background: #101110;
   --foreground: #f4f3ed;
   --muted: #9a9b94;
