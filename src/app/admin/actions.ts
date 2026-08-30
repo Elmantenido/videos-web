@@ -336,11 +336,23 @@ function extractStudioByLabel(html: string): string | null {
 }
 
 /** Normalizes whatever date text a source site shows (e.g. "July 30, 2026") to "yyyy-mm-dd". */
-function extractReleasedAt(html: string): string | null {
-  const raw = extractValueByLabel(html, "Released");
+function normalizeReleasedDate(raw: string | null): string | null {
   if (!raw) return null;
   const date = new Date(raw);
   return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
+}
+
+function extractReleasedAt(html: string): string | null {
+  const idx = html.search(/Released/i);
+  if (idx === -1) return null;
+  // The visible text next to "Released" is a relative time ("24 years ago");
+  // the real absolute date lives in the tooltip button's data-tip attribute,
+  // e.g. <button ... data-tip="December 20, 2001">.
+  const tooltip = html.slice(idx).match(/data-tip=["']([^"']+)["']/i);
+  if (tooltip) return normalizeReleasedDate(decodeHtmlEntities(tooltip[1]));
+
+  // Fallback for sources without a tooltip: read the label's own value pill.
+  return normalizeReleasedDate(extractValueByLabel(html, "Released"));
 }
 
 function extractDuration(html: string): string | null {
