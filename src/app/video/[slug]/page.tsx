@@ -28,6 +28,65 @@ function formatReleasedDate(date: Date) {
   return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
+const RELEVANCE_STOPWORDS = new Set([
+  "the", "and", "for", "with", "from", "this", "that", "have", "are", "was", "were", "your", "you",
+  "una", "unos", "unas", "para", "con", "del", "las", "los", "que", "por", "como", "esta", "este",
+]);
+
+// Combining diacritical marks (U+0300-U+036F), stripped after NFD
+// normalization so accented and unaccented spellings of a word overlap.
+const COMBINING_MARKS = new RegExp(`[\\u0300-\\u036f]`, "g");
+
+function tokenizeForRelevance(text: string): Set<string> {
+  return new Set(
+    text
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(COMBINING_MARKS, "")
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 3 && !RELEVANCE_STOPWORDS.has(w))
+  );
+}
+
+/** How close a candidate video is to the one being watched: same studio,
+ * shared categories, and overlapping words in the description. */
+function relevanceScore(
+  current: { studio: string | null; description: string | null; categoryIds: Set<number> },
+  candidate: { studio: string | null; description: string | null; categories: { id: number }[] }
+): number {
+  let score = 0;
+
+  if (current.studio && candidate.studio && current.studio === candidate.studio) score += 6;
+
+  const sharedCategories = candidate.categories.filter((c) => current.categoryIds.has(c.id)).length;
+  score += sharedCategories * 3;
+
+  if (current.description && candidate.description) {
+    const currentWords = tokenizeForRelevance(current.description);
+    const candidateWords = tokenizeForRelevance(candidate.description);
+    let overlap = 0;
+    for (const word of currentWords) if (candidateWords.has(word)) overlap++;
+    score += Math.min(overlap, 8);
+  }
+
+  return score;
+}
+
+/**
+ * Orders items randomly but weighted toward higher relevance, so "Related"
+ * favors videos close to the one being watched without always showing the
+ * exact same set in the exact same order (Efraimidis-Spirakis A-ES
+ * weighted sampling: higher weight -> key closer to 1 more often, but
+ * never guaranteed).
+ */
+function weightedRandomOrder<T>(items: T[], weightOf: (item: T) => number): T[] {
+  return items
+    .map((item) => ({ item, key: Math.random() ** (1 / (weightOf(item) + 1)) }))
+    .sort((a, b) => b.key - a.key)
+    .map((entry) => entry.item);
+}
+
 function extractTrailingNumber(title: string): number | null {
   const match = title.match(/(\d+)\s*$/);
   return match ? Number(match[1]) : null;
@@ -184,22 +243,33 @@ export default async function VideoPage({ params }: Props) {
           orderBy: { title: "asc" },
         })
       : Promise.resolve([]),
-    categoryIds.length
+    categoryIds.length || video.studio
       ? prisma.video.findMany({
           where: {
             published: true,
             NOT: { id: video.id },
-            categories: { some: { id: { in: categoryIds } } },
+            OR: [
+              ...(categoryIds.length ? [{ categories: { some: { id: { in: categoryIds } } } }] : []),
+              ...(video.studio ? [{ studio: video.studio }] : []),
+            ],
           },
-          orderBy: { views: "desc" },
-          take: 10,
+          include: { categories: true },
+          take: 40,
         })
       : Promise.resolve([]),
   ]);
 
   const upNext = orderSeriesForUpNext(video.title, seriesMatches).slice(0, 5);
   const usedIds = new Set([video.id, ...upNext.map((v) => v.id)]);
-  const related = categoryMatches.filter((v) => !usedIds.has(v.id)).slice(0, 8);
+
+  const currentCategoryIds = new Set(categoryIds);
+  const relatedCandidates = categoryMatches.filter((v) => !usedIds.has(v.id));
+  const related = weightedRandomOrder(relatedCandidates, (v) =>
+    relevanceScore(
+      { studio: video.studio, description: video.description, categoryIds: currentCategoryIds },
+      v
+    )
+  ).slice(0, 7);
 
   const jsonLd = {
     "@context": "https://schema.org",
