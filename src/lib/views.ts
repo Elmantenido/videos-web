@@ -1,10 +1,15 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { VISIT_COOKIE } from "@/lib/visit";
+import { isAuthenticated } from "@/lib/auth";
 
 export type TrendingRange = "today" | "week" | "month" | "all";
 
 export async function recordView(videoId: number) {
+  // Don't let an admin's own testing/browsing inflate the public view count,
+  // Trending rankings, or the visits-module playback stats.
+  if (await isAuthenticated()) return;
+
   const store = await cookies();
   const visitId = store.get(VISIT_COOKIE)?.value;
 

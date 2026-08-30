@@ -6,14 +6,13 @@ export type VisitRow = {
   country: string | null;
   landingPage: string;
   referrer: string | null;
-  isAdmin: boolean;
   playsCount: number;
   durationSeconds: number;
 };
 
 export async function getVisits(from: Date, to: Date): Promise<VisitRow[]> {
   const visits = await prisma.visit.findMany({
-    where: { createdAt: { gte: from, lte: to } },
+    where: { createdAt: { gte: from, lte: to }, isAdmin: false },
     orderBy: { createdAt: "desc" },
     take: 500,
   });
@@ -24,7 +23,6 @@ export async function getVisits(from: Date, to: Date): Promise<VisitRow[]> {
     country: v.country,
     landingPage: v.landingPage,
     referrer: v.referrer,
-    isAdmin: v.isAdmin,
     playsCount: v.playsCount,
     durationSeconds: Math.max(
       0,
@@ -35,8 +33,14 @@ export async function getVisits(from: Date, to: Date): Promise<VisitRow[]> {
 
 export async function getSummary(from: Date, to: Date) {
   const [visits, pageViews, plays] = await Promise.all([
-    prisma.visit.count({ where: { createdAt: { gte: from, lte: to } } }),
-    prisma.pageView.count({ where: { createdAt: { gte: from, lte: to } } }),
+    prisma.visit.count({ where: { createdAt: { gte: from, lte: to }, isAdmin: false } }),
+    prisma.pageView.count({
+      where: { createdAt: { gte: from, lte: to }, visit: { isAdmin: false } },
+    }),
+    // VideoView has no link back to Visit, so it can't be filtered by
+    // isAdmin here -- instead recordView() (lib/views.ts) simply never
+    // creates one for an authenticated admin session, so this count is
+    // admin-free for any play recorded after that change shipped.
     prisma.videoView.count({ where: { createdAt: { gte: from, lte: to } } }),
   ]);
   return { visits, pageViews, plays };
@@ -58,11 +62,11 @@ export async function getLast30MinBuckets(): Promise<MinuteBucket[]> {
 
   const [visits, pageViews, plays] = await Promise.all([
     prisma.visit.findMany({
-      where: { createdAt: { gte: windowStart } },
+      where: { createdAt: { gte: windowStart }, isAdmin: false },
       select: { createdAt: true },
     }),
     prisma.pageView.findMany({
-      where: { createdAt: { gte: windowStart } },
+      where: { createdAt: { gte: windowStart }, visit: { isAdmin: false } },
       select: { createdAt: true },
     }),
     prisma.videoView.findMany({

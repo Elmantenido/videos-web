@@ -22,17 +22,28 @@ function clientIp(req: NextRequest): string | null {
  */
 export async function ensureVisit(req: NextRequest, res: NextResponse) {
   const existingId = req.cookies.get(VISIT_COOKIE)?.value;
+  const isAdminNow = verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
 
   if (existingId) {
-    const stillExists = await prisma.visit.findUnique({
+    const existing = await prisma.visit.findUnique({
       where: { id: existingId },
-      select: { id: true },
+      select: { id: true, isAdmin: true },
     });
-    if (stillExists) return;
+    if (existing) {
+      // A visit usually starts before someone logs in (they browse, then
+      // go to /admin/login), so isAdmin can't be decided once and for all
+      // at creation time. Once any request under this visit is
+      // authenticated, flag the whole visit as admin from then on so it
+      // (and everything already recorded under it) drops out of the
+      // public stats -- never the other way around.
+      if (isAdminNow && !existing.isAdmin) {
+        await prisma.visit.update({ where: { id: existingId }, data: { isAdmin: true } }).catch(() => {});
+      }
+      return;
+    }
   }
 
   const pathname = req.nextUrl.pathname;
-  const isAdmin = verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
   const id = crypto.randomUUID();
   const ip = clientIp(req);
   const referrer = req.headers.get("referer") || null;
@@ -44,7 +55,7 @@ export async function ensureVisit(req: NextRequest, res: NextResponse) {
   // -- a flood of cookie-less requests would turn that into a slow-request
   // denial-of-service against this server itself, not just a UX hiccup.
   await prisma.visit.create({
-    data: { id, landingPage: pathname, referrer, country: null, isAdmin },
+    data: { id, landingPage: pathname, referrer, country: null, isAdmin: isAdminNow },
   });
 
   res.cookies.set(VISIT_COOKIE, id, {
