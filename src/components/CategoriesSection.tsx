@@ -33,7 +33,7 @@ export default function CategoriesSection({
       <nav className="category-links" aria-label="Categories">
         <Link className="category-pill selected" href="#catalogo">{pillAllLabel} <span>{totalVideos}</span></Link>
         {categories.map((category) => (
-          <Link key={category.id} className="category-pill" href={`/categoria/${category.slug}`}>
+          <Link key={category.id} className="category-pill" href={`/category/${category.slug}`}>
             {category.name}
           </Link>
         ))}

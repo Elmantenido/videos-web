@@ -289,7 +289,7 @@ export default async function VideoPage({ params }: Props) {
               {video.categories.map((category) => (
                 <Link
                   key={category.id}
-                  href={`/categoria/${category.slug}`}
+                  href={`/category/${category.slug}`}
                   className="rounded-full border border-white/15 px-4 py-1.5 text-sm text-gray-300 transition-colors hover:border-[var(--lime)] hover:text-[var(--lime)]"
                 >
                   {category.name}
