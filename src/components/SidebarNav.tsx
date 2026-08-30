@@ -5,8 +5,8 @@ import Link from "next/link";
 
 const NAV_ITEMS = [
   { href: "/", label: "Home" },
-  { href: "/#catalogo", label: "Recent Uploads" },
-  { href: "/#new-releases", label: "New Releases" },
+  { href: "/recent-uploads", label: "Recent Uploads" },
+  { href: "/new-releases", label: "New Releases" },
   { href: "/#random", label: "Random" },
   { href: "/#trending", label: "Trending" },
   { href: "/videos", label: "All Videos" },

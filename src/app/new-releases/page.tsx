@@ -8,25 +8,26 @@ import VideoGridSection from "@/components/VideoGridSection";
 type Props = { searchParams: Promise<{ page?: string }> };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const title = "All videos";
-  const description = "Browse the full video catalog, sorted by release date.";
+  const title = "New Releases";
+  const description = "Every video with a known release date, newest first.";
   return {
     title,
     description,
-    alternates: { canonical: absoluteUrl("/videos") },
-    openGraph: { title, description, url: absoluteUrl("/videos") },
+    alternates: { canonical: absoluteUrl("/new-releases") },
+    openGraph: { title, description, url: absoluteUrl("/new-releases") },
   };
 }
 
-export default async function AllVideosPage({ searchParams }: Props) {
+export default async function NewReleasesPage({ searchParams }: Props) {
   const { page: pageParam } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
 
   const [{ videos, totalPages }, s] = await Promise.all([
-    // releasedAt sorts NULLs last in SQLite, so videos without a release
-    // date fall to the end (ordered by upload date among themselves)
-    // instead of scattering randomly through the list.
-    getVideoListing({ orderBy: [{ releasedAt: "desc" }, { createdAt: "desc" }], page }),
+    getVideoListing({
+      where: { releasedAt: { not: null } },
+      orderBy: { releasedAt: "desc" },
+      page,
+    }),
     getSiteSettings(),
   ]);
 
@@ -35,13 +36,13 @@ export default async function AllVideosPage({ searchParams }: Props) {
       <SiteHeader brandPrefix={s.brand_prefix} brandSuffix={s.brand_suffix} />
       <div className="site-shell">
         <VideoGridSection
-          kicker="Full catalog"
-          title="All videos"
+          kicker="Fresh drops"
+          title="New Releases"
           videos={videos}
-          emptyStateText="No videos published yet."
+          emptyStateText="No videos with a release date yet."
           page={page}
           totalPages={totalPages}
-          basePath="/videos"
+          basePath="/new-releases"
           brandPrefix={s.brand_prefix}
           brandSuffix={s.brand_suffix}
         />
