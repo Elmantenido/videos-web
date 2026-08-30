@@ -9,7 +9,9 @@ export async function GET(req: NextRequest) {
   const range = (VALID_RANGES as string[]).includes(rangeParam)
     ? (rangeParam as TrendingRange)
     : "today";
+  const take = Number(searchParams.get("take") ?? 10);
+  const skip = Number(searchParams.get("skip") ?? 0);
 
-  const videos = await getTrending(range, 10);
+  const videos = await getTrending(range, take, skip);
   return NextResponse.json({ range, videos });
 }

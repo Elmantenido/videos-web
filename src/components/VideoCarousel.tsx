@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import type { TrendingRange } from "@/lib/views";
 
 export type CarouselVideo = {
   id: number;
@@ -13,7 +14,9 @@ export type CarouselVideo = {
 };
 
 type Props = {
-  mode: "latest" | "random" | "newReleases";
+  mode: "latest" | "random" | "newReleases" | "trending";
+  /** Required when mode is "trending"; ignored otherwise. */
+  range?: TrendingRange;
   initialVideos: CarouselVideo[];
   brandPrefix: string;
   brandSuffix: string;
@@ -22,6 +25,7 @@ type Props = {
 
 export default function VideoCarousel({
   mode,
+  range,
   initialVideos,
   brandPrefix,
   brandSuffix,
@@ -64,6 +68,21 @@ export default function VideoCarousel({
         );
         const data = await res.json();
         more = data.videos ?? [];
+      } else if (mode === "trending") {
+        const res = await fetch(
+          `/api/trending?range=${range}&take=${visibleCount}&skip=${videos.length}`
+        );
+        const data = await res.json();
+        more = (data.videos ?? []).map(
+          (v: { id: number; slug: string; title: string; thumbnail: string | null; duration: string | null; viewCount: number }) => ({
+            id: v.id,
+            slug: v.slug,
+            title: v.title,
+            thumbnail: v.thumbnail,
+            duration: v.duration,
+            views: v.viewCount,
+          })
+        );
       } else {
         const excludeIds = videos.map((v) => v.id).join(",");
         const res = await fetch(

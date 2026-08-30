@@ -2,8 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getTrending } from "@/lib/views";
 import { PUBLIC_VIDEO_SELECT } from "@/lib/video-select";
-
-export const CAROUSEL_PAGE_SIZE = 5;
+import { CAROUSEL_PAGE_SIZE } from "@/lib/carousel";
 
 export async function getHomeData() {
   const [latestVideos, newReleases, randomVideos, totalVideos, categories, settings, trending] =
@@ -26,7 +25,7 @@ export async function getHomeData() {
       prisma.video.count({ where: { published: true } }),
       prisma.category.findMany({ orderBy: { name: "asc" } }),
       getSiteSettings(),
-      getTrending("today", 10),
+      getTrending("month", 10),
     ]);
 
   return { latestVideos, newReleases, randomVideos, totalVideos, categories, settings, trending };

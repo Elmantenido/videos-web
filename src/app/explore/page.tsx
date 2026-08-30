@@ -79,10 +79,12 @@ export default async function ExplorePage() {
         />
 
         <TrendingSection
-          initialRange="today"
+          initialRange="month"
           initialVideos={trending}
           kicker={s.trending_kicker}
           title={s.trending_title}
+          brandPrefix={s.brand_prefix}
+          brandSuffix={s.brand_suffix}
         />
 
         <footer className="footer">

@@ -62,13 +62,16 @@ export default async function HomePage() {
         titleLine1={s.categories_title_line1}
         titleEmphasis={s.categories_title_emphasis}
         pillAllLabel={s.category_pill_all}
+        centered
       />
 
       <TrendingSection
-        initialRange="today"
+        initialRange="month"
         initialVideos={trending}
         kicker={s.trending_kicker}
         title={s.trending_title}
+        brandPrefix={s.brand_prefix}
+        brandSuffix={s.brand_suffix}
       />
     </>
   );

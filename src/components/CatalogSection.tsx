@@ -1,6 +1,6 @@
 import Link from "next/link";
 import VideoCarousel, { type CarouselVideo } from "@/components/VideoCarousel";
-import { CAROUSEL_PAGE_SIZE } from "@/lib/home-data";
+import { CAROUSEL_PAGE_SIZE } from "@/lib/carousel";
 
 type Props = {
   videos: CarouselVideo[];

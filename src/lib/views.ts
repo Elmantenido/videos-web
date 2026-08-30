@@ -46,10 +46,11 @@ export type TrendingVideo = {
   title: string;
   studio: string | null;
   thumbnail: string | null;
+  duration: string | null;
   viewCount: number;
 };
 
-export async function getTrending(range: TrendingRange, take = 10): Promise<TrendingVideo[]> {
+export async function getTrending(range: TrendingRange, take = 10, skip = 0): Promise<TrendingVideo[]> {
   const since = rangeStart(range);
 
   if (!since) {
@@ -57,6 +58,7 @@ export async function getTrending(range: TrendingRange, take = 10): Promise<Tren
       where: { published: true },
       orderBy: { views: "desc" },
       take,
+      skip,
     });
     return videos.map((v) => ({
       id: v.id,
@@ -64,6 +66,7 @@ export async function getTrending(range: TrendingRange, take = 10): Promise<Tren
       title: v.title,
       studio: v.studio,
       thumbnail: v.thumbnail,
+      duration: v.duration,
       viewCount: v.views,
     }));
   }
@@ -74,6 +77,7 @@ export async function getTrending(range: TrendingRange, take = 10): Promise<Tren
     _count: { videoId: true },
     orderBy: { _count: { videoId: "desc" } },
     take,
+    skip,
   });
 
   if (grouped.length === 0) return [];
@@ -93,6 +97,7 @@ export async function getTrending(range: TrendingRange, take = 10): Promise<Tren
         title: video.title,
         studio: video.studio,
         thumbnail: video.thumbnail,
+        duration: video.duration,
         viewCount: g._count.videoId,
       };
     })
