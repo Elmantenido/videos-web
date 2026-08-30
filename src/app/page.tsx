@@ -78,16 +78,16 @@ export default async function HomePage() {
 
   return (
     <main>
-      <div className="site-shell">
-        <HomeHeader
-          brandPrefix={s.brand_prefix}
-          brandSuffix={s.brand_suffix}
-          navHome={s.nav_home}
-          navExplore={s.nav_explore}
-          navCategories={s.nav_categories}
-          activeTab="home"
-        />
+      <HomeHeader
+        brandPrefix={s.brand_prefix}
+        brandSuffix={s.brand_suffix}
+        navHome={s.nav_home}
+        navExplore={s.nav_explore}
+        navCategories={s.nav_categories}
+        activeTab="home"
+      />
 
+      <div className="site-shell">
         {!heroEnabled && contentSections}
 
         {heroEnabled && (

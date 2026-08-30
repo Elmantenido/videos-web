@@ -9,7 +9,7 @@ type Props = {
 
 export default function SiteHeader({ brandPrefix, brandSuffix }: Props) {
   return (
-    <div className="site-shell">
+    <div className="header-shell">
       <header className="topbar">
         <div className="topbar-start">
           <SidebarNav />

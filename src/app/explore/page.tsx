@@ -28,16 +28,16 @@ export default async function ExplorePage() {
 
   return (
     <main>
-      <div className="site-shell">
-        <HomeHeader
-          brandPrefix={s.brand_prefix}
-          brandSuffix={s.brand_suffix}
-          navHome={s.nav_home}
-          navExplore={s.nav_explore}
-          navCategories={s.nav_categories}
-          activeTab="explore"
-        />
+      <HomeHeader
+        brandPrefix={s.brand_prefix}
+        brandSuffix={s.brand_suffix}
+        navHome={s.nav_home}
+        navExplore={s.nav_explore}
+        navCategories={s.nav_categories}
+        activeTab="explore"
+      />
 
+      <div className="site-shell">
         <h1 className="sr-only">Explore the catalog</h1>
 
         <CategoriesSection

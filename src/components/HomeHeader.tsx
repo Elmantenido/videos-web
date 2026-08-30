@@ -20,23 +20,25 @@ export default function HomeHeader({
   activeTab,
 }: Props) {
   return (
-    <header className="topbar">
-      <div className="topbar-start">
-        <SidebarNav />
-        <Link href="/" className="brand" aria-label={`${brandPrefix}${brandSuffix} home`}>
-          <span className="brand-mark"><span>{brandPrefix.charAt(0)}</span></span>
-          <span>{brandPrefix}<span>{brandSuffix}</span></span>
-        </Link>
-        <nav className="main-nav" aria-label="Main navigation">
-          <Link className={activeTab === "home" ? "active" : ""} href="/">{navHome}</Link>
-          <Link className={activeTab === "explore" ? "active" : ""} href="/explore">{navExplore}</Link>
-          <Link href="/explore#categorias">{navCategories}</Link>
-          <Link href="#trending">Trending</Link>
-        </nav>
-      </div>
-      <div className="top-actions">
-        <SearchBox />
-      </div>
-    </header>
+    <div className="header-shell">
+      <header className="topbar">
+        <div className="topbar-start">
+          <SidebarNav />
+          <Link href="/" className="brand" aria-label={`${brandPrefix}${brandSuffix} home`}>
+            <span className="brand-mark"><span>{brandPrefix.charAt(0)}</span></span>
+            <span>{brandPrefix}<span>{brandSuffix}</span></span>
+          </Link>
+          <nav className="main-nav" aria-label="Main navigation">
+            <Link className={activeTab === "home" ? "active" : ""} href="/">{navHome}</Link>
+            <Link className={activeTab === "explore" ? "active" : ""} href="/explore">{navExplore}</Link>
+            <Link href="/explore#categorias">{navCategories}</Link>
+            <Link href="#trending">Trending</Link>
+          </nav>
+        </div>
+        <div className="top-actions">
+          <SearchBox />
+        </div>
+      </header>
+    </div>
   );
 }
