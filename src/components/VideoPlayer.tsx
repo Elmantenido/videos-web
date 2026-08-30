@@ -68,7 +68,7 @@ export default function VideoPlayer({ videoId, thumbnail, title }: Props) {
           className="h-full w-full object-cover"
         />
       )}
-      <span className="absolute inset-0 flex items-center justify-center bg-black/30 transition group-hover:bg-black/40">
+      <span className="absolute inset-0 flex items-center justify-center bg-black/10 transition group-hover:bg-black/25">
         <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-2xl text-black">
           {loading ? "…" : "▶"}
         </span>
