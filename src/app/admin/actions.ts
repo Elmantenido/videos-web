@@ -444,6 +444,24 @@ function extractPosterImageUrl(html: string): string | null {
   return null;
 }
 
+/**
+ * Some sites serve a different (blocked/interstitial) response to requests
+ * that don't look like a real browser. A plain fetch() from Node sends none
+ * of a browser's usual headers, so mimic a real one and, when known, send a
+ * Referer -- the "video" URL is often only served in full to requests that
+ * appear to come from the page that embeds it.
+ */
+function browserHeaders(referer?: string): HeadersInit {
+  return {
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36",
+    Accept:
+      "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    ...(referer ? { Referer: referer } : {}),
+  };
+}
+
 export async function extractFromUrl(url: string, videoUrl?: string) {
   await requireAuth();
 
@@ -456,7 +474,7 @@ export async function extractFromUrl(url: string, videoUrl?: string) {
 
   let html: string;
   try {
-    const res = await fetch(target.toString(), { cache: "no-store" });
+    const res = await fetch(target.toString(), { cache: "no-store", headers: browserHeaders() });
     if (!res.ok) {
       return { error: `No se pudo abrir esa página (${res.status}).` };
     }
@@ -509,7 +527,10 @@ export async function extractFromUrl(url: string, videoUrl?: string) {
 
     if (videoTarget) {
       try {
-        const videoRes = await fetch(videoTarget.toString(), { cache: "no-store" });
+        const videoRes = await fetch(videoTarget.toString(), {
+          cache: "no-store",
+          headers: browserHeaders(target.toString()),
+        });
         if (!videoRes.ok) {
           videoNote = `No se pudo abrir la URL de video (${videoRes.status}).`;
         } else {
