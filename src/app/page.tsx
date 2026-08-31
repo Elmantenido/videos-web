@@ -111,7 +111,7 @@ export default async function HomePage() {
 
         {heroEnabled && contentSections}
 
-        <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} />
+        <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} keywordPhrase={s.footer_keyword_phrase} />
       </div>
     </main>
   );

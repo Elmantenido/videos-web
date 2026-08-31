@@ -98,6 +98,12 @@ export const SETTING_GROUPS: {
       { key: "footer_copyright", label: "Texto de derechos", default: "© 2026 NOVAFLIX" },
       { key: "footer_tagline", label: "Frase del pie de página", default: "A different take on entertainment" },
       { key: "footer_admin_link", label: "Enlace al panel de administración", default: "Admin panel" },
+      {
+        key: "footer_keyword_phrase",
+        label: "Frase clave para SEO (se muestra como encabezado H2 arriba del pie de página; vacío = no se muestra)",
+        default: "",
+        multiline: true,
+      },
     ],
   },
 ];

@@ -154,6 +154,7 @@ em { color: var(--lime); font-family: Georgia, serif; font-style: italic; font-w
 .trending-tabs { display: flex; gap: 8px; }
 .trending-tab { background: transparent; border: 1px solid var(--line); color: var(--muted); cursor: pointer; font-size: 12px; padding: 9px 14px; }
 .trending-tab.selected { background: var(--lime); border-color: var(--lime); color: #161812; }
+.footer-keyword { color: var(--muted); font-size: 14px; font-weight: 400; line-height: 1.6; margin: 24px 0 0; max-width: 70ch; }
 .footer { border-top: 1px solid var(--line); color: #777a72; display: flex; font-size: 10px; justify-content: space-between; letter-spacing: .08em; padding: 23px 0; text-transform: uppercase; }
 .footer a { color: var(--lime); }
 @media (max-width: 760px) {
