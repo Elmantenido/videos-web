@@ -13,9 +13,15 @@ type ResultItem = {
   malTitle: string | null;
 };
 
-type Summary = { total: number; matched: number; unmatched: number; stopReason: string | null };
+type Summary = {
+  total: number;
+  matched: number;
+  unmatched: number;
+  remainingAfter: number;
+  stopReason: string | null;
+};
 
-export default function MalUpdateAllButton() {
+export default function MalUpdateMissingButton() {
   const router = useRouter();
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
@@ -28,7 +34,7 @@ export default function MalUpdateAllButton() {
     setSummary(null);
     setProgress({ done: 0, total: 0 });
 
-    const source = new EventSource("/api/admin/mal-update-all");
+    const source = new EventSource("/api/admin/mal-update-missing");
 
     source.addEventListener("start", (e) => {
       const data = JSON.parse((e as MessageEvent).data);
@@ -61,20 +67,22 @@ export default function MalUpdateAllButton() {
     <div className="mb-8 rounded border p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="font-semibold">Actualizar todos desde MyAnimeList</h2>
+          <h2 className="font-semibold">Actualizar solo los que faltan (lote de 10)</h2>
           <p className="text-sm text-gray-500">
-            Busca cada video en MyAnimeList y guarda de una vez los datos que encuentre (Score,
-            Ranked, Popularity, Members). Si el título principal no encuentra nada, prueba también
-            con los nombres alternativos guardados en la descripción.
+            Toma hasta 10 videos que todavía no tengan datos de MyAnimeList, los busca y guarda de
+            una vez lo que encuentre (Score, Ranked, Popularity, Members). Si el título principal
+            no encuentra nada, prueba también con los nombres alternativos guardados en la
+            descripción. Se procesa de a poco para no saturar a MyAnimeList — volvé a hacer clic
+            para procesar el siguiente lote.
           </p>
         </div>
         <button
           type="button"
           onClick={start}
           disabled={running}
-          className="rounded bg-black px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-50"
+          className="rounded border px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
         >
-          {running ? `Actualizando... (${progress.done}/${progress.total})` : "Actualizar todos"}
+          {running ? `Actualizando... (${progress.done}/${progress.total})` : "Actualizar lote de 10"}
         </button>
       </div>
 
@@ -95,15 +103,29 @@ export default function MalUpdateAllButton() {
         <div className="mt-4">
           {summary.stopReason && (
             <p className="mb-3 rounded border border-amber-400 bg-amber-50 p-2 text-sm text-amber-800">
-              Se detuvo antes de terminar porque MyAnimeList rechazó una solicitud (posible
-              bloqueo temporal por parte de su protección anti-bot): &ldquo;{summary.stopReason}
-              &rdquo;. Esperá un rato antes de volver a intentar.
+              Se detuvo antes de terminar el lote porque MyAnimeList rechazó una solicitud
+              (posible bloqueo temporal por parte de su protección anti-bot): &ldquo;
+              {summary.stopReason}&rdquo;. Esperá un rato antes de volver a intentar.
             </p>
           )}
           <p className="text-sm font-medium">
-            {summary.matched} de {summary.total} videos actualizados desde MyAnimeList
-            {summary.unmatched > 0 ? ` — ${summary.unmatched} sin coincidencia.` : "."}
+            {summary.total === 0
+              ? summary.stopReason
+                ? "No se pudo procesar ningún video de este lote."
+                : "No quedan videos pendientes por consultar en MyAnimeList."
+              : `${summary.matched} de ${summary.total} videos actualizados desde MyAnimeList${
+                  summary.unmatched > 0 ? ` — ${summary.unmatched} sin coincidencia.` : "."
+                }`}
           </p>
+          {summary.total > 0 && (
+            <p className="mt-1 text-sm text-gray-500">
+              {summary.remainingAfter > 0
+                ? summary.remainingAfter === 1
+                  ? "Queda 1 video pendiente."
+                  : `Quedan ${summary.remainingAfter} videos pendientes.`
+                : "Ya no quedan videos pendientes."}
+            </p>
+          )}
 
           {unmatchedResults.length > 0 && (
             <div className="mt-3 flex flex-col gap-3">

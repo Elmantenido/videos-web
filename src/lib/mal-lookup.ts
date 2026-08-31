@@ -41,14 +41,43 @@ function titlesLikelyMatch(query: string, candidate: string): boolean {
   return normCandidate.includes(normQuery) || normQuery.includes(normCandidate);
 }
 
-async function fetchText(url: string): Promise<string> {
+// MyAnimeList sits behind Akamai and issues a session cookie (MALSESSIONID)
+// on the very first response. A real browser carries that cookie on every
+// later request in the session; never sending one back at all is a classic
+// bot signal, so it's captured here and replayed on subsequent requests.
+let cookieJar = "";
+
+function rememberCookies(res: Response) {
+  const setCookie = res.headers.getSetCookie?.() ?? [];
+  for (const raw of setCookie) {
+    const pair = raw.split(";")[0];
+    const name = pair.split("=")[0];
+    const kept = cookieJar.split("; ").filter((c) => c && !c.startsWith(`${name}=`));
+    cookieJar = [...kept, pair].filter(Boolean).join("; ");
+  }
+}
+
+async function fetchText(url: string, referer?: string): Promise<string> {
+  const headers: Record<string, string> = { ...(browserHeaders(referer) as Record<string, string>) };
+  if (cookieJar) headers.Cookie = cookieJar;
+
   const res = await fetch(url, {
-    headers: browserHeaders(),
+    headers,
     signal: AbortSignal.timeout(10000),
     cache: "no-store",
   });
+  rememberCookies(res);
   if (!res.ok) throw new Error(`MyAnimeList respondió con estado ${res.status}`);
   return res.text();
+}
+
+/** Waits a randomized interval instead of a fixed one -- an inhumanly even
+ * cadence between requests is itself a bot signature anti-scraping layers
+ * look for. Exported so the bulk-update routes can pace requests between
+ * videos the same way, not just within a single lookup. */
+export function randomDelay(minMs: number, maxMs: number): Promise<void> {
+  const ms = minMs + Math.random() * (maxMs - minMs);
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 type SearchResult = { title: string; type: string; url: string };
@@ -107,14 +136,17 @@ export async function lookupMyAnimeList(videoTitle: string): Promise<MalMatch | 
   const query = stripEpisodeNumber(videoTitle);
   if (query.length < 2) return null;
 
-  const searchHtml = await fetchText(
-    `https://myanimelist.net/anime.php?q=${encodeURIComponent(query)}&cat=anime`
-  );
+  const searchUrl = `https://myanimelist.net/anime.php?q=${encodeURIComponent(query)}&cat=anime`;
+  const searchHtml = await fetchText(searchUrl);
   const results = parseSearchResults(searchHtml).filter((r) => titlesLikelyMatch(query, r.title));
   if (results.length === 0) return null;
 
   const match = results.find((r) => r.type.toUpperCase() === "OVA") ?? results[0];
-  const detailHtml = await fetchText(match.url);
+
+  // A real visitor spends a moment reading the results before clicking
+  // through, and that click carries the search page as its referer.
+  await randomDelay(400, 900);
+  const detailHtml = await fetchText(match.url, searchUrl);
 
   return {
     title: match.title,

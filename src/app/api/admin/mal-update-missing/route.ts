@@ -12,22 +12,38 @@ import { lookupMyAnimeListWithFallback, randomDelay } from "@/lib/mal-lookup";
 const DELAY_MS_MIN = 2000;
 const DELAY_MS_MAX = 4000;
 
+// Each run only takes a small batch of the videos still missing MAL data,
+// instead of the whole catalog at once -- fewer requests to MyAnimeList per
+// click keeps this well under the radar of its anti-bot protection. Videos
+// that get a match here drop out of the "still missing" set, so clicking
+// the button again naturally picks up the next batch.
+const BATCH_SIZE = 10;
+
 /**
  * Streams one Server-Sent Event per video as its MyAnimeList lookup
- * completes, so the admin "AnimeList" full-update button can show live
- * progress. Unlike mal-update-missing's route, this re-checks every video
- * in the catalog regardless of whether it already has MAL data, refreshing
- * stats that may have changed since the last check.
+ * completes, so the admin "AnimeList" bulk-update button can show live
+ * progress. Any match found is saved immediately; the final "done" event
+ * doesn't carry the unmatched list itself -- the client builds that from
+ * the "result" events it already received.
  */
 export async function GET() {
   if (!(await isAuthenticated())) {
     return new Response("No autorizado", { status: 401 });
   }
 
-  const videos = await prisma.video.findMany({
-    orderBy: { createdAt: "desc" },
-    select: { id: true, slug: true, title: true, thumbnail: true, description: true },
-  });
+  const where = { malTitle: null };
+
+  const [videos, remainingBefore] = await Promise.all([
+    prisma.video.findMany({
+      where,
+      // Never-checked videos (malCheckedAt null) go first; among those
+      // already checked without luck, the oldest checks are retried first.
+      orderBy: [{ malCheckedAt: "asc" }, { createdAt: "desc" }],
+      take: BATCH_SIZE,
+      select: { id: true, slug: true, title: true, thumbnail: true, description: true },
+    }),
+    prisma.video.count({ where }),
+  ]);
 
   const encoder = new TextEncoder();
 
@@ -37,7 +53,7 @@ export async function GET() {
         controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
       }
 
-      send("start", { total: videos.length });
+      send("start", { total: videos.length, remainingBefore });
 
       let matchedCount = 0;
       let unmatchedCount = 0;
@@ -51,10 +67,10 @@ export async function GET() {
         } catch (err) {
           // A thrown error means the request itself failed (network issue,
           // or MyAnimeList's anti-bot layer rejecting it) -- not "no match
-          // found". Continuing to fire off the rest of the catalog against
-          // a site that's already rejecting us would only make things
-          // worse, so the whole run stops here instead of quietly
-          // mislabeling the remaining videos as unmatched.
+          // found". Continuing to fire off the rest of the batch against a
+          // site that's already rejecting us would only make things worse,
+          // so the whole run stops here instead of quietly mislabeling the
+          // remaining videos as unmatched.
           stopReason = err instanceof Error ? err.message : "error desconocido";
           break;
         }
@@ -90,10 +106,12 @@ export async function GET() {
         await randomDelay(DELAY_MS_MIN, DELAY_MS_MAX);
       }
 
+      const remainingAfter = remainingBefore - matchedCount;
       send("done", {
         total: processedCount,
         matched: matchedCount,
         unmatched: unmatchedCount,
+        remainingAfter,
         stopReason,
       });
       controller.close();
