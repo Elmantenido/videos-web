@@ -140,21 +140,21 @@ function RelatedVideoRow({ video }: { video: RelatedVideo }) {
       href={`/video/${video.slug}`}
       className="flex gap-3 rounded p-1 transition-colors hover:bg-white/5"
     >
-      <div className="aspect-[2/3] w-20 flex-shrink-0 overflow-hidden rounded bg-white/10">
+      <div className="aspect-[2/3] w-28 flex-shrink-0 overflow-hidden rounded bg-white/10">
         {video.thumbnail && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={video.thumbnail}
             alt={video.title}
-            width={200}
-            height={300}
+            width={224}
+            height={336}
             loading="lazy"
             className="h-full w-full object-cover"
           />
         )}
       </div>
       <div className="min-w-0">
-        <p className="line-clamp-3 text-sm text-gray-200">{video.title}</p>
+        <p className="line-clamp-3 text-base text-gray-200">{video.title}</p>
         <p className="mt-1 text-xs text-gray-500">{video.views.toLocaleString()} views</p>
       </div>
     </Link>
@@ -339,56 +339,60 @@ export default async function VideoPage({ params }: Props) {
           </div>
           <h1 className="mt-4 text-2xl font-bold">{video.title}</h1>
 
-          <div className="mt-4 flex flex-col gap-4 rounded-lg border border-white/10 p-4 sm:flex-row">
-            {video.thumbnail && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={video.thumbnail}
-                alt={video.title}
-                width={200}
-                height={300}
-                loading="eager"
-                className="aspect-[2/3] w-28 flex-shrink-0 self-start rounded object-cover"
-              />
-            )}
-            <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
-              {video.studio && (
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Estudio
-                  </p>
-                  <p className="mt-0.5 font-semibold text-[var(--lime)]">{video.studio}</p>
-                </div>
+          <div className="mt-4 flex flex-col gap-4 rounded-lg border border-white/10 p-4">
+            <div className="flex flex-col gap-4 sm:flex-row">
+              {video.thumbnail && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={video.thumbnail}
+                  alt={video.title}
+                  width={200}
+                  height={300}
+                  loading="eager"
+                  className="aspect-[2/3] w-28 flex-shrink-0 self-start rounded object-cover"
+                />
               )}
-              {video.duration && (
+              <div className="grid flex-1 grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+                {video.studio && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Estudio
+                    </p>
+                    <p className="mt-0.5 font-semibold text-[var(--lime)]">{video.studio}</p>
+                  </div>
+                )}
+                {video.duration && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Duración
+                    </p>
+                    <p className="mt-0.5 font-semibold text-gray-100">
+                      {formatDurationMinutes(video.duration)}
+                    </p>
+                  </div>
+                )}
+                {video.releasedAt && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Released
+                    </p>
+                    <p className="mt-0.5 font-semibold text-gray-100">
+                      {formatReleasedDate(video.releasedAt)}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Duración
+                    Views
                   </p>
                   <p className="mt-0.5 font-semibold text-gray-100">
-                    {formatDurationMinutes(video.duration)}
+                    {video.views.toLocaleString()}
                   </p>
                 </div>
-              )}
-              {video.releasedAt && (
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                    Released
-                  </p>
-                  <p className="mt-0.5 font-semibold text-gray-100">
-                    {formatReleasedDate(video.releasedAt)}
-                  </p>
-                </div>
-              )}
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Views
-                </p>
-                <p className="mt-0.5 font-semibold text-gray-100">
-                  {video.views.toLocaleString()}
-                </p>
               </div>
             </div>
+
+            <ReportProblemButton videoId={video.id} />
           </div>
 
           {video.categories.length > 0 && (
@@ -413,8 +417,6 @@ export default async function VideoPage({ params }: Props) {
               <p className="leading-relaxed text-gray-300">{video.description}</p>
             </div>
           )}
-
-          <ReportProblemButton videoId={video.id} />
         </div>
 
         <aside className="flex flex-col gap-6">
@@ -431,7 +433,7 @@ export default async function VideoPage({ params }: Props) {
 
           {related.length > 0 && (
             <div>
-              <h2 className="mb-3 text-sm font-semibold text-gray-400">Related</h2>
+              <h2 className="mb-3 text-base font-semibold text-gray-400">See more</h2>
               <div className="flex flex-col gap-2">
                 {related.map((r) => (
                   <RelatedVideoRow key={r.id} video={r} />
