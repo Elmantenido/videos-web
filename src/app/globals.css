@@ -95,16 +95,22 @@ a { color: inherit; text-decoration: none; }
    drawer's own class) reserves the room for it across every page without
    needing to touch each page's layout individually. */
 @media (min-width: 761px) {
+  /* Narrower than the mobile overlay's 280px -- as a persistent rail this
+     width isn't just a drawer's own visual choice anymore, it's space
+     taken from every page's content, so it's sized to just fit the
+     longest label ("Recent Uploads") plus padding instead of matching
+     the mobile drawer's more generous overlay width. */
+  :root { --sidebar-width-expanded: 224px; --sidebar-width-collapsed: 72px; }
   .sidebar-toggle { display: none; }
   .sidebar-close { display: none; }
   .sidebar-collapse-toggle { display: inline-flex; }
   .sidebar-overlay { background: none; opacity: 1; pointer-events: none; }
-  .sidebar-drawer { pointer-events: auto; transform: none; z-index: 250; }
-  .sidebar-drawer.is-collapsed { width: 72px; }
+  .sidebar-drawer { pointer-events: auto; transform: none; width: var(--sidebar-width-expanded); z-index: 250; }
+  .sidebar-drawer.is-collapsed { width: var(--sidebar-width-collapsed); }
   .sidebar-drawer.is-collapsed .sidebar-list a { justify-content: center; padding-left: 0; padding-right: 0; }
   .sidebar-drawer.is-collapsed .sidebar-label { display: none; }
-  body:has(.sidebar-drawer) { padding-left: 280px; transition: padding-left .2s ease; }
-  body:has(.sidebar-drawer.is-collapsed) { padding-left: 72px; }
+  body:has(.sidebar-drawer) { padding-left: var(--sidebar-width-expanded); transition: padding-left .2s ease; }
+  body:has(.sidebar-drawer.is-collapsed) { padding-left: var(--sidebar-width-collapsed); }
 }
 .hero { background-position: center; background-size: cover; height: min(590px, 65vh); min-height: 440px; overflow: hidden; position: relative; }
 .hero-shade { background: linear-gradient(90deg, rgba(10, 12, 10, .98) 0%, rgba(10, 12, 10, .76) 38%, rgba(10, 12, 10, .08) 100%), linear-gradient(0deg, #101110 0%, transparent 25%); inset: 0; position: absolute; }
