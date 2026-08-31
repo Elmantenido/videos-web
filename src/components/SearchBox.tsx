@@ -63,6 +63,17 @@ export default function SearchBox() {
   return (
     <div className="search-box" ref={containerRef}>
       <div className="search-input-row">
+        {/* Decoy field: some browsers try to autofill a saved password into
+            the nearest text input regardless of its own autocomplete value.
+            A hidden password input absorbs that instead of the real search
+            box. */}
+        <input
+          type="password"
+          autoComplete="new-password"
+          tabIndex={-1}
+          aria-hidden="true"
+          style={{ position: "absolute", opacity: 0, top: "-1000px", left: "-1000px" }}
+        />
         <input
           type="text"
           value={query}

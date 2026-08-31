@@ -60,7 +60,8 @@ a { color: inherit; text-decoration: none; }
 .top-actions { align-items: center; display: flex; gap: 20px; justify-content: center; min-width: 0; }
 .icon-button { background: transparent; border: 0; color: var(--foreground); cursor: pointer; font-size: 27px; line-height: 1; padding: 4px; transform: rotate(-20deg); }
 .search-box { position: relative; max-width: 560px; width: 100%; }
-.search-input-row { align-items: center; background: var(--panel); border: 1px solid var(--line); display: flex; gap: 6px; padding: 0 4px 0 16px; }
+.search-input-row { align-items: center; background: var(--panel); border: 1px solid var(--line); display: flex; gap: 6px; padding: 0 4px 0 16px; transition: background-color .15s ease, box-shadow .15s ease; }
+.search-input-row:hover { background: color-mix(in srgb, var(--panel), white 8%); box-shadow: 0 6px 20px rgba(0, 0, 0, .25); }
 .search-input-row:focus-within { border-color: var(--lime); }
 .search-input { background: transparent; border: 0; color: var(--foreground); flex: 1; font-size: 16px; min-width: 0; padding: 13px 0; }
 .search-input:focus { outline: none; }
