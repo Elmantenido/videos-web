@@ -38,6 +38,13 @@ export default function VideoCarousel({
   const [stepPx, setStepPx] = useState(0);
   const trackRef = useRef<HTMLDivElement>(null);
 
+  // Drag-to-scroll: lets a mouse (or touch) drag move the carousel like the
+  // arrow buttons do, instead of requiring the arrows.
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartXRef = useRef(0);
+  const draggedRef = useRef(false);
+
   useEffect(() => {
     function measure() {
       const track = trackRef.current;
@@ -113,6 +120,38 @@ export default function VideoCarousel({
     setStartIndex((i) => Math.max(0, i - 1));
   }
 
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (loading || !stepPx) return;
+    setIsDragging(true);
+    draggedRef.current = false;
+    dragStartXRef.current = e.clientX;
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (!isDragging) return;
+    const delta = e.clientX - dragStartXRef.current;
+    if (Math.abs(delta) > 5) draggedRef.current = true;
+    setDragOffset(delta);
+  }
+
+  function endDrag() {
+    if (!isDragging) return;
+    setIsDragging(false);
+
+    const threshold = stepPx ? stepPx / 4 : 40;
+    if (dragOffset <= -threshold) {
+      goNext();
+    } else if (dragOffset >= threshold) {
+      goPrev();
+    }
+    setDragOffset(0);
+  }
+
+  function handleCardClick(e: React.MouseEvent) {
+    if (draggedRef.current) e.preventDefault();
+  }
+
   const canGoPrev = startIndex > 0;
   const canGoNext = !(exhausted && startIndex + visibleCount >= videos.length);
 
@@ -134,13 +173,25 @@ export default function VideoCarousel({
         <div
           className="carousel-track"
           ref={trackRef}
-          style={{ transform: `translateX(-${startIndex * stepPx}px)` }}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onPointerLeave={endDrag}
+          style={{
+            transform: `translateX(${-(startIndex * stepPx) + dragOffset}px)`,
+            transition: isDragging ? "none" : undefined,
+            cursor: isDragging ? "grabbing" : "grab",
+            touchAction: "pan-y",
+          }}
         >
           {videos.map((video, i) => (
             <Link
               key={video.id}
               href={`/video/${video.slug}`}
               className="video-card carousel-item"
+              onClick={handleCardClick}
+              draggable={false}
             >
               <div className="thumbnail-wrap">
                 {video.thumbnail ? (
@@ -151,6 +202,7 @@ export default function VideoCarousel({
                     width={300}
                     height={450}
                     loading={i === 0 ? "eager" : "lazy"}
+                    draggable={false}
                   />
                 ) : (
                   <div className="no-thumbnail">{brandPrefix}{brandSuffix}</div>
