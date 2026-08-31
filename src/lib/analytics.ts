@@ -1,33 +1,69 @@
 import { prisma } from "@/lib/prisma";
 import { classifyUserAgent } from "@/lib/visitor-type";
 
+// A real visit's client-side tracker (PageViewTracker) fires within
+// milliseconds of the page mounting, so a visit with zero recorded page
+// views essentially never ran our JavaScript at all -- almost always a
+// plain HTTP client (curl, requests, a scraping script) rather than a
+// browser, even when it fakes a browser-looking User-Agent.
+const SUSPICIOUS_IP_VISIT_THRESHOLD = 15;
+
 export type VisitRow = {
   id: string;
   createdAt: Date;
   country: string | null;
   landingPage: string;
   referrer: string | null;
+  ip: string | null;
   playsCount: number;
   durationSeconds: number;
   isBot: boolean;
   visitorType: string;
+  scrapingSignal: string | null;
 };
 
 export async function getVisits(from: Date, to: Date): Promise<VisitRow[]> {
-  const visits = await prisma.visit.findMany({
-    where: { createdAt: { gte: from, lte: to }, isAdmin: false },
-    orderBy: { createdAt: "desc" },
-    take: 500,
-  });
+  const [visits, ipCounts] = await Promise.all([
+    prisma.visit.findMany({
+      where: { createdAt: { gte: from, lte: to }, isAdmin: false },
+      orderBy: { createdAt: "desc" },
+      take: 500,
+      include: { _count: { select: { pageViews: true } } },
+    }),
+    prisma.visit.groupBy({
+      by: ["ip"],
+      where: { createdAt: { gte: from, lte: to }, isAdmin: false, ip: { not: null } },
+      _count: { id: true },
+    }),
+  ]);
+
+  const ipCountByIp = new Map(ipCounts.map((row) => [row.ip, row._count.id]));
 
   return visits.map((v) => {
     const { isBot, label } = classifyUserAgent(v.userAgent);
+
+    // Named bots (Googlebot, AhrefsBot, etc.) are already flagged via
+    // visitorType -- this signal is specifically for traffic that passes
+    // as "Usuario real" by User-Agent but behaves like a script.
+    let scrapingSignal: string | null = null;
+    if (!isBot) {
+      if (v._count.pageViews === 0) {
+        scrapingSignal = "Nunca ejecutó JavaScript (posible script, no un navegador)";
+      } else {
+        const ipCount = v.ip ? (ipCountByIp.get(v.ip) ?? 0) : 0;
+        if (ipCount >= SUSPICIOUS_IP_VISIT_THRESHOLD) {
+          scrapingSignal = `Esta IP generó ${ipCount} visitas nuevas en este rango`;
+        }
+      }
+    }
+
     return {
       id: v.id,
       createdAt: v.createdAt,
       country: v.country,
       landingPage: v.landingPage,
       referrer: v.referrer,
+      ip: v.ip,
       playsCount: v.playsCount,
       durationSeconds: Math.max(
         0,
@@ -35,6 +71,7 @@ export async function getVisits(from: Date, to: Date): Promise<VisitRow[]> {
       ),
       isBot,
       visitorType: label,
+      scrapingSignal,
     };
   });
 }

@@ -94,11 +94,13 @@ model Visit {
   landingPage String
   referrer    String?
   userAgent   String?
+  ip          String?
   isAdmin     Boolean    @default(false)
   playsCount  Int        @default(0)
   pageViews   PageView[]
 
   @@index([createdAt])
+  @@index([ip, createdAt])
 }
 
 model PageView {

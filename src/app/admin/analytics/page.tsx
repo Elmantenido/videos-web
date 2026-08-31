@@ -109,6 +109,7 @@ export default async function AnalyticsPage({ searchParams }: Props) {
             <tr>
               <th className="px-3 py-2">Fecha</th>
               <th className="px-3 py-2">Tipo</th>
+              <th className="px-3 py-2">IP</th>
               <th className="px-3 py-2">País</th>
               <th className="px-3 py-2">Página</th>
               <th className="px-3 py-2">Origen</th>
@@ -127,11 +128,21 @@ export default async function AnalyticsPage({ searchParams }: Props) {
                     <span className="rounded bg-amber-100 px-2 py-1 text-xs text-amber-700">
                       {visit.visitorType}
                     </span>
+                  ) : visit.scrapingSignal ? (
+                    <span
+                      className="rounded bg-red-100 px-2 py-1 text-xs text-red-700"
+                      title={visit.scrapingSignal}
+                    >
+                      Posible scraping
+                    </span>
                   ) : (
                     <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-700">
                       {visit.visitorType}
                     </span>
                   )}
+                </td>
+                <td className="whitespace-nowrap px-3 py-2 font-mono text-xs text-gray-500">
+                  {visit.ip ?? "—"}
                 </td>
                 <td className="px-3 py-2">{visit.country ?? "—"}</td>
                 <td className="max-w-[220px] truncate px-3 py-2" title={visit.landingPage}>

@@ -56,7 +56,7 @@ export async function ensureVisit(req: NextRequest, res: NextResponse) {
   // -- a flood of cookie-less requests would turn that into a slow-request
   // denial-of-service against this server itself, not just a UX hiccup.
   await prisma.visit.create({
-    data: { id, landingPage: pathname, referrer, userAgent, country: null, isAdmin: isAdminNow },
+    data: { id, landingPage: pathname, referrer, userAgent, ip, country: null, isAdmin: isAdminNow },
   });
 
   res.cookies.set(VISIT_COOKIE, id, {
