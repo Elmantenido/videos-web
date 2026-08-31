@@ -10,7 +10,7 @@
   --foreground: #f4f3ed;
   --muted: #9a9b94;
   --line: rgba(244, 243, 237, 0.14);
-  --lime: #673de6;
+  --lime: #ac50c8;
   --panel: #191b19;
 }
 
@@ -179,7 +179,7 @@ em { color: var(--lime); font-family: Georgia, serif; font-style: italic; font-w
 .carousel-item { flex: 0 0 calc((100% - 4 * 16px) / 5); min-width: 0; }
 .carousel-arrow { align-items: center; backdrop-filter: blur(2px); background: rgba(20, 21, 20, .45); border: 1px solid rgba(244, 243, 237, .2); border-radius: 50%; box-shadow: 0 6px 20px rgba(0, 0, 0, .35); color: var(--foreground); cursor: pointer; display: flex; font-size: 44px; height: 80px; justify-content: center; line-height: 1; position: absolute; top: 50%; transform: translateY(-50%); width: 80px; z-index: 5; }
 .carousel-arrow:disabled { cursor: not-allowed; opacity: .25; }
-.carousel-arrow:not(:disabled):hover { background: rgba(103, 61, 230, .75); border-color: var(--lime); color: var(--foreground); }
+.carousel-arrow:not(:disabled):hover { background: rgba(172, 80, 200, .75); border-color: var(--lime); color: var(--foreground); }
 .carousel-arrow-left { left: -14px; }
 .carousel-arrow-right { right: -14px; }
 .thumbnail-wrap { aspect-ratio: 2 / 3; background: var(--panel); overflow: hidden; position: relative; }
