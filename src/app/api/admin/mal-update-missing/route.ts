@@ -17,7 +17,7 @@ const DELAY_MS_MAX = 4000;
 // click keeps this well under the radar of its anti-bot protection. Videos
 // that get a match here drop out of the "still missing" set, so clicking
 // the button again naturally picks up the next batch.
-const BATCH_SIZE = 10;
+const BATCH_SIZE = 25;
 
 /**
  * Streams one Server-Sent Event per video as its MyAnimeList lookup

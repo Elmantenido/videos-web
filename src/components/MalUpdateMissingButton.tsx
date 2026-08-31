@@ -67,9 +67,9 @@ export default function MalUpdateMissingButton() {
     <div className="mb-8 rounded border p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="font-semibold">Actualizar solo los que faltan (lote de 10)</h2>
+          <h2 className="font-semibold">Actualizar solo los que faltan (lote de 25)</h2>
           <p className="text-sm text-gray-500">
-            Toma hasta 10 videos que todavía no tengan datos de MyAnimeList, los busca y guarda de
+            Toma hasta 25 videos que todavía no tengan datos de MyAnimeList, los busca y guarda de
             una vez lo que encuentre (Score, Ranked, Popularity, Members). Si el título principal
             no encuentra nada, prueba también con los nombres alternativos guardados en la
             descripción. Se procesa de a poco para no saturar a MyAnimeList — volvé a hacer clic
@@ -82,7 +82,7 @@ export default function MalUpdateMissingButton() {
           disabled={running}
           className="rounded border px-4 py-2 text-sm hover:bg-gray-50 disabled:opacity-50"
         >
-          {running ? `Actualizando... (${progress.done}/${progress.total})` : "Actualizar lote de 10"}
+          {running ? `Actualizando... (${progress.done}/${progress.total})` : "Actualizar lote de 25"}
         </button>
       </div>
 
