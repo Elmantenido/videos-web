@@ -10,6 +10,13 @@ import { lookupMyAnimeListWithFallback } from "@/lib/mal-lookup";
 // aggressively, so this deliberately runs slow.
 const DELAY_MS = 500;
 
+// Each run only takes a small batch of the videos still missing MAL data,
+// instead of the whole catalog at once -- fewer requests to MyAnimeList per
+// click keeps this well under the radar of its anti-bot protection. Videos
+// that get a match here drop out of the "still missing" set, so clicking
+// the button again naturally picks up the next batch.
+const BATCH_SIZE = 10;
+
 function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -26,10 +33,19 @@ export async function GET() {
     return new Response("No autorizado", { status: 401 });
   }
 
-  const videos = await prisma.video.findMany({
-    orderBy: { createdAt: "desc" },
-    select: { id: true, slug: true, title: true, thumbnail: true, description: true },
-  });
+  const where = { malTitle: null };
+
+  const [videos, remainingBefore] = await Promise.all([
+    prisma.video.findMany({
+      where,
+      // Never-checked videos (malCheckedAt null) go first; among those
+      // already checked without luck, the oldest checks are retried first.
+      orderBy: [{ malCheckedAt: "asc" }, { createdAt: "desc" }],
+      take: BATCH_SIZE,
+      select: { id: true, slug: true, title: true, thumbnail: true, description: true },
+    }),
+    prisma.video.count({ where }),
+  ]);
 
   const encoder = new TextEncoder();
 
@@ -39,7 +55,7 @@ export async function GET() {
         controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
       }
 
-      send("start", { total: videos.length });
+      send("start", { total: videos.length, remainingBefore });
 
       let matchedCount = 0;
       let unmatchedCount = 0;
@@ -82,7 +98,13 @@ export async function GET() {
         await sleep(DELAY_MS);
       }
 
-      send("done", { total: videos.length, matched: matchedCount, unmatched: unmatchedCount });
+      const remainingAfter = remainingBefore - matchedCount;
+      send("done", {
+        total: videos.length,
+        matched: matchedCount,
+        unmatched: unmatchedCount,
+        remainingAfter,
+      });
       controller.close();
     },
   });

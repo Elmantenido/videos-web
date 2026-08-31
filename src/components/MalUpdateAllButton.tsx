@@ -13,7 +13,7 @@ type ResultItem = {
   malTitle: string | null;
 };
 
-type Summary = { total: number; matched: number; unmatched: number };
+type Summary = { total: number; matched: number; unmatched: number; remainingAfter: number };
 
 export default function MalUpdateAllButton() {
   const router = useRouter();
@@ -61,11 +61,13 @@ export default function MalUpdateAllButton() {
     <div className="mb-8 rounded border p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="font-semibold">Actualizar todos desde MyAnimeList</h2>
+          <h2 className="font-semibold">Actualizar desde MyAnimeList</h2>
           <p className="text-sm text-gray-500">
-            Busca cada video en MyAnimeList y guarda de una vez los datos que encuentre (Score,
-            Ranked, Popularity, Members). Si el título principal no encuentra nada, prueba también
-            con los nombres alternativos guardados en la descripción.
+            Toma hasta 10 videos que todavía no tengan datos de MyAnimeList, los busca y guarda de
+            una vez lo que encuentre (Score, Ranked, Popularity, Members). Si el título principal
+            no encuentra nada, prueba también con los nombres alternativos guardados en la
+            descripción. Se procesa de a poco (no todo el catálogo de golpe) para no saturar a
+            MyAnimeList — volvé a hacer clic para procesar el siguiente lote.
           </p>
         </div>
         <button
@@ -74,7 +76,7 @@ export default function MalUpdateAllButton() {
           disabled={running}
           className="rounded bg-black px-4 py-2 text-sm text-white hover:bg-gray-800 disabled:opacity-50"
         >
-          {running ? `Actualizando... (${progress.done}/${progress.total})` : "Actualizar todos"}
+          {running ? `Actualizando... (${progress.done}/${progress.total})` : "Actualizar lote de 10"}
         </button>
       </div>
 
@@ -94,9 +96,19 @@ export default function MalUpdateAllButton() {
       {summary && (
         <div className="mt-4">
           <p className="text-sm font-medium">
-            {summary.matched} de {summary.total} videos actualizados desde MyAnimeList
-            {summary.unmatched > 0 ? ` — ${summary.unmatched} sin coincidencia.` : "."}
+            {summary.total === 0
+              ? "No quedan videos pendientes por consultar en MyAnimeList."
+              : `${summary.matched} de ${summary.total} videos actualizados desde MyAnimeList${
+                  summary.unmatched > 0 ? ` — ${summary.unmatched} sin coincidencia.` : "."
+                }`}
           </p>
+          {summary.total > 0 && (
+            <p className="mt-1 text-sm text-gray-500">
+              {summary.remainingAfter > 0
+                ? `Quedan ${summary.remainingAfter} video${summary.remainingAfter === 1 ? "" : "s"} pendientes.`
+                : "Ya no quedan videos pendientes."}
+            </p>
+          )}
 
           {unmatchedResults.length > 0 && (
             <div className="mt-3 flex flex-col gap-3">
