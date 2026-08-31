@@ -145,9 +145,7 @@ export default async function AnalyticsPage({ searchParams }: Props) {
                   {visit.ip ?? "—"}
                 </td>
                 <td className="px-3 py-2">{visit.country ?? "—"}</td>
-                <td className="max-w-[220px] truncate px-3 py-2" title={visit.landingPage}>
-                  {visit.landingPage}
-                </td>
+                <td className="max-w-xs break-all px-3 py-2">{visit.landingPage}</td>
                 <td className="max-w-[220px] truncate px-3 py-2" title={visit.referrer ?? undefined}>
                   {visit.referrer ?? "Direct"}
                 </td>
