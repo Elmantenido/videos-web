@@ -123,6 +123,11 @@ export const SEO_FIELDS: SettingField[] = [
     label: "Código de verificación de Google Search Console (meta tag, solo el valor content)",
     default: "",
   },
+  {
+    key: "seo_bing_site_verification",
+    label: "Código de verificación de Bing Webmaster Tools (meta tag, solo el valor content)",
+    default: "",
+  },
 ];
 
 export const DEFAULT_SETTINGS: Record<string, string> = Object.fromEntries(

@@ -40,9 +40,18 @@ export async function generateMetadata(): Promise<Metadata> {
       description: s.seo_meta_description,
       images: s.seo_og_image ? [s.seo_og_image] : undefined,
     },
-    verification: s.seo_google_site_verification
-      ? { google: s.seo_google_site_verification }
-      : undefined,
+    // Next.js's Metadata type has a dedicated `google` field but no `bing`
+    // one -- Bing's verification tag is <meta name="msvalidate.01" ...>,
+    // which goes through the generic `other` bucket instead.
+    verification:
+      s.seo_google_site_verification || s.seo_bing_site_verification
+        ? {
+            google: s.seo_google_site_verification || undefined,
+            other: s.seo_bing_site_verification
+              ? { "msvalidate.01": s.seo_bing_site_verification }
+              : undefined,
+          }
+        : undefined,
   };
 }
 
