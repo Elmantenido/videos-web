@@ -390,8 +390,51 @@ export default async function VideoPage({ params }: Props) {
                     {video.views.toLocaleString()}
                   </p>
                 </div>
+                {video.malScore && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Score
+                    </p>
+                    <p className="mt-0.5 font-semibold text-[var(--lime)]">{video.malScore}</p>
+                  </div>
+                )}
+                {video.malRanked && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Ranked
+                    </p>
+                    <p className="mt-0.5 font-semibold text-gray-100">{video.malRanked}</p>
+                  </div>
+                )}
+                {video.malPopularity && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Popularity
+                    </p>
+                    <p className="mt-0.5 font-semibold text-gray-100">{video.malPopularity}</p>
+                  </div>
+                )}
+                {video.malMembers && (
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      Members
+                    </p>
+                    <p className="mt-0.5 font-semibold text-gray-100">{video.malMembers}</p>
+                  </div>
+                )}
               </div>
             </div>
+
+            {video.malUrl && (
+              <a
+                href={video.malUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-gray-500 hover:text-gray-300 hover:underline"
+              >
+                Stats via MyAnimeList: {video.malTitle} ↗
+              </a>
+            )}
 
             <ReportProblemButton videoId={video.id} />
           </div>

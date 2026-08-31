@@ -37,6 +37,13 @@ model Video {
   published   Boolean    @default(true)
   createdAt   DateTime   @default(now())
   views       Int        @default(0)
+  malTitle       String?
+  malUrl         String?
+  malScore       String?
+  malRanked      String?
+  malPopularity  String?
+  malMembers     String?
+  malCheckedAt   DateTime?
   categories  Category[]
   tags        Tag[]
   viewEvents  VideoView[]

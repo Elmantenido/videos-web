@@ -9,6 +9,7 @@ import { slugify } from "@/lib/slugify";
 import { sanitizeEmbedCode } from "@/lib/embed";
 import { checkEmbedPlayback } from "@/lib/embed-check";
 import { syncAutoEmbedAlert, syncManualPlaybackAlert } from "@/lib/video-alerts";
+import { lookupMyAnimeList } from "@/lib/mal-lookup";
 import { browserHeaders } from "@/lib/browser-headers";
 import { SETTING_GROUPS, SEO_FIELDS } from "@/lib/site-settings";
 import {
@@ -217,6 +218,49 @@ export async function verifyVideoPlayback(videoId: number): Promise<{ ok: boolea
 
   revalidatePath("/admin/alerts");
   return result;
+}
+
+/** The "Buscar en MyAnimeList" button: searches MAL for this video's
+ * series name and, if a confident match is found, saves its stats.
+ * Manual/on-demand rather than automatic on every save -- this project's
+ * VPS has previously gotten IP-blocked scraping a different site, so
+ * hitting a third party like MAL on every create/update would be risky. */
+export async function lookupVideoMalStats(
+  videoId: number
+): Promise<{ ok: boolean; message: string }> {
+  await requireAuth();
+
+  const video = await prisma.video.findUnique({ where: { id: videoId }, select: { title: true, slug: true } });
+  if (!video) return { ok: false, message: "Video no encontrado." };
+
+  let match;
+  try {
+    match = await lookupMyAnimeList(video.title);
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : "error desconocido";
+    return { ok: false, message: `No se pudo consultar MyAnimeList: ${detail}` };
+  }
+
+  if (!match) {
+    return { ok: false, message: "No se encontró ninguna coincidencia en MyAnimeList para este título." };
+  }
+
+  await prisma.video.update({
+    where: { id: videoId },
+    data: {
+      malTitle: match.title,
+      malUrl: match.url,
+      malScore: match.score,
+      malRanked: match.ranked,
+      malPopularity: match.popularity,
+      malMembers: match.members,
+      malCheckedAt: new Date(),
+    },
+  });
+
+  revalidatePath(`/admin/videos/${videoId}`);
+  revalidatePath(`/video/${video.slug}`);
+  return { ok: true, message: `Coincidencia encontrada: "${match.title}".` };
 }
 
 export async function resolveAlert(alertId: number) {

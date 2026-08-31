@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import VideoForm from "../VideoForm";
-import { updateVideo, deleteVideo, verifyVideoPlayback } from "../../actions";
+import { updateVideo, deleteVideo, verifyVideoPlayback, lookupVideoMalStats } from "../../actions";
 import ConfirmSubmitButton from "@/components/ConfirmSubmitButton";
 import VerifyPlaybackButton from "@/components/VerifyPlaybackButton";
+import MalLookupButton from "@/components/MalLookupButton";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -21,6 +22,7 @@ export default async function EditVideoPage({ params }: Props) {
 
   const boundUpdate = updateVideo.bind(null, video.id);
   const boundVerify = verifyVideoPlayback.bind(null, video.id);
+  const boundMalLookup = lookupVideoMalStats.bind(null, video.id);
 
   return (
     <main className="mx-auto max-w-xl px-4 py-10">
@@ -51,6 +53,26 @@ export default async function EditVideoPage({ params }: Props) {
 
       <div className="mt-6 border-t pt-6">
         <VerifyPlaybackButton verify={boundVerify} />
+      </div>
+
+      <div className="mt-6 border-t pt-6">
+        <MalLookupButton lookup={boundMalLookup} />
+        {video.malTitle && (
+          <p className="mt-2 text-sm text-gray-600">
+            Última coincidencia:{" "}
+            <a
+              href={video.malUrl ?? undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              {video.malTitle} ↗
+            </a>
+            {" — "}
+            Score {video.malScore ?? "—"} · Ranked {video.malRanked ?? "—"} · Popularity{" "}
+            {video.malPopularity ?? "—"} · Members {video.malMembers ?? "—"}
+          </p>
+        )}
       </div>
 
       <form
