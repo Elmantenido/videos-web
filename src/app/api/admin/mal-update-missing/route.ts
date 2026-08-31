@@ -19,6 +19,18 @@ const DELAY_MS_MAX = 4000;
 // the button again naturally picks up the next batch.
 const BATCH_SIZE = 25;
 
+/** Fisher-Yates shuffle -- picking a random 25 out of the pending set each
+ * time (instead of always the same ones in the same order) means a video
+ * that keeps failing doesn't get stuck hogging the front of every batch. */
+function shuffle<T>(items: T[]): T[] {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 /**
  * Streams one Server-Sent Event per video as its MyAnimeList lookup
  * completes, so the admin "AnimeList" bulk-update button can show live
@@ -33,17 +45,14 @@ export async function GET() {
 
   const where = { malTitle: null };
 
-  const [videos, remainingBefore] = await Promise.all([
-    prisma.video.findMany({
-      where,
-      // Never-checked videos (malCheckedAt null) go first; among those
-      // already checked without luck, the oldest checks are retried first.
-      orderBy: [{ malCheckedAt: "asc" }, { createdAt: "desc" }],
-      take: BATCH_SIZE,
-      select: { id: true, slug: true, title: true, thumbnail: true, description: true },
-    }),
-    prisma.video.count({ where }),
-  ]);
+  const pending = await prisma.video.findMany({ where, select: { id: true } });
+  const remainingBefore = pending.length;
+  const batchIds = shuffle(pending.map((v) => v.id)).slice(0, BATCH_SIZE);
+
+  const videos = await prisma.video.findMany({
+    where: { id: { in: batchIds } },
+    select: { id: true, slug: true, title: true, thumbnail: true, description: true },
+  });
 
   const encoder = new TextEncoder();
 
