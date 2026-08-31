@@ -157,6 +157,10 @@ em { color: var(--lime); font-family: Georgia, serif; font-style: italic; font-w
 .footer-keyword { color: var(--muted); font-size: 14px; font-weight: 400; line-height: 1.6; margin: 24px 0 0; max-width: 70ch; }
 .footer { border-top: 1px solid var(--line); color: #777a72; display: flex; font-size: 10px; justify-content: space-between; letter-spacing: .08em; padding: 23px 0; text-transform: uppercase; }
 .footer a { color: var(--lime); }
+/* The tagline is an <h3> for document outline/SEO purposes, but should
+   still look like the rest of this small uppercase footer line, not a
+   browser-default bold heading. */
+.footer h3 { margin: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
 @media (max-width: 760px) {
   .site-shell { padding: 0 20px; }.topbar { column-gap: 12px; height: 86px; }.brand { font-size: 20px; }.admin-link { display: none; }
   .hero { margin: 0 -20px; min-height: 480px; }.hero-content { left: 28px; right: 20px; top: 25%; }.hero h1 { font-size: 56px; }.hero-shade { background: linear-gradient(90deg, rgba(10, 12, 10, .95), rgba(10, 12, 10, .25)), linear-gradient(0deg, #101110 0%, transparent 30%); }

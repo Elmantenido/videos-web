@@ -13,7 +13,7 @@ export default function SiteFooter({ copyright, tagline, adminLabel, keywordPhra
       {keywordPhrase && <h2 className="footer-keyword">{keywordPhrase}</h2>}
       <footer className="footer">
         <span>{copyright}</span>
-        <span>{tagline}</span>
+        <h3>{tagline}</h3>
         <Link href="/admin">{adminLabel} ↗</Link>
       </footer>
     </>
