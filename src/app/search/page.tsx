@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettings } from "@/lib/site-settings";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 type Props = { searchParams: Promise<{ q?: string }> };
 
@@ -96,6 +97,8 @@ export default async function SearchPage({ searchParams }: Props) {
           )}
         </section>
       </div>
+
+      <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} />
     </main>
   );
 }

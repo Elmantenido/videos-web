@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getSiteSettings } from "@/lib/site-settings";
 import { absoluteUrl } from "@/lib/seo";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -82,6 +83,8 @@ export default async function CategoryPage({ params }: Props) {
         </p>
       )}
       </div>
+
+      <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} />
     </main>
   );
 }

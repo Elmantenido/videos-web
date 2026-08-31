@@ -3,6 +3,7 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { getVideoListing } from "@/lib/video-listing";
 import { paginatedCanonical } from "@/lib/seo";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import VideoGridSection from "@/components/VideoGridSection";
 
 type Props = { searchParams: Promise<{ page?: string }> };
@@ -45,6 +46,8 @@ export default async function RecentUploadsPage({ searchParams }: Props) {
           brandSuffix={s.brand_suffix}
         />
       </div>
+
+      <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} />
     </main>
   );
 }

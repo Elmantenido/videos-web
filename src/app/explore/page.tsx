@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { getHomeData } from "@/lib/home-data";
 import { absoluteUrl } from "@/lib/seo";
 import TrendingSection from "@/components/TrendingSection";
@@ -8,6 +7,7 @@ import NewReleasesSection from "@/components/NewReleasesSection";
 import RandomVideosSection from "@/components/RandomVideosSection";
 import CategoriesSection from "@/components/CategoriesSection";
 import HomeHeader from "@/components/HomeHeader";
+import SiteFooter from "@/components/SiteFooter";
 
 export const revalidate = 60;
 
@@ -87,11 +87,7 @@ export default async function ExplorePage() {
           brandSuffix={s.brand_suffix}
         />
 
-        <footer className="footer">
-          <span>{s.footer_copyright}</span>
-          <span>{s.footer_tagline}</span>
-          <Link href="/admin">{s.footer_admin_link} ↗</Link>
-        </footer>
+        <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} />
       </div>
     </main>
   );

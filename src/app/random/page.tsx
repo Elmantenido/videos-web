@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/site-settings";
 import { getRandomVideoListing } from "@/lib/video-listing";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import VideoGridSection from "@/components/VideoGridSection";
 
 type Props = { searchParams: Promise<{ page?: string; seed?: string }> };
@@ -53,6 +54,8 @@ export default async function RandomPage({ searchParams }: Props) {
           brandSuffix={s.brand_suffix}
         />
       </div>
+
+      <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} />
     </main>
   );
 }

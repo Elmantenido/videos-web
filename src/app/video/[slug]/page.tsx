@@ -6,6 +6,7 @@ import { extractPreviewImages } from "@/lib/preview";
 import { getSiteSettings } from "@/lib/site-settings";
 import { absoluteUrl, toIsoDuration } from "@/lib/seo";
 import SiteHeader from "@/components/SiteHeader";
+import SiteFooter from "@/components/SiteFooter";
 import VideoPlayer from "@/components/VideoPlayer";
 import ReportProblemButton from "@/components/ReportProblemButton";
 
@@ -461,6 +462,8 @@ export default async function VideoPage({ params }: Props) {
         </div>
       )}
       </div>
+
+      <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} />
 
       <script
         type="application/ld+json"
