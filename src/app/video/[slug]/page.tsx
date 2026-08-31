@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { extractPreviewImages } from "@/lib/preview";
 import { getSiteSettings } from "@/lib/site-settings";
 import { absoluteUrl, toIsoDuration } from "@/lib/seo";
+import { isEmbedUrl } from "@/lib/embed";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -280,6 +281,11 @@ export default async function VideoPage({ params }: Props) {
     thumbnailUrl: video.thumbnail ?? undefined,
     uploadDate: video.createdAt.toISOString(),
     duration: toIsoDuration(video.duration),
+    // Google requires contentUrl or embedUrl alongside name/thumbnailUrl/
+    // uploadDate. Only set when embedUrl is an actual URL (the alternative
+    // is admin-pasted raw <video>/<iframe> HTML, which isn't a valid value
+    // for this property).
+    embedUrl: isEmbedUrl(video.embedUrl) ? video.embedUrl : undefined,
     interactionStatistic: {
       "@type": "InteractionCounter",
       interactionType: "https://schema.org/WatchAction",

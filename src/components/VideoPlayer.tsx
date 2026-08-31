@@ -44,6 +44,13 @@ export default function VideoPlayer({ videoId, thumbnail, title }: Props) {
         className="h-full w-full"
         allow="autoplay; encrypted-media; picture-in-picture"
         allowFullScreen
+        // Without a sandbox, the third-party embed can navigate the whole
+        // tab (window.top.location) -- a common ad-monetization tactic
+        // that overwrites this page in browser history, so pressing back
+        // afterward skips straight past it to whatever came before. This
+        // permission set still lets the player itself run and use its own
+        // origin, just not redirect or pop windows out from under the user.
+        sandbox="allow-scripts allow-same-origin allow-presentation"
       />
     );
   }
