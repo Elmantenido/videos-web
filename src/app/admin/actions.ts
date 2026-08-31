@@ -9,7 +9,7 @@ import { slugify } from "@/lib/slugify";
 import { sanitizeEmbedCode } from "@/lib/embed";
 import { checkEmbedPlayback } from "@/lib/embed-check";
 import { syncAutoEmbedAlert, syncManualPlaybackAlert } from "@/lib/video-alerts";
-import { lookupMyAnimeList } from "@/lib/mal-lookup";
+import { lookupMyAnimeListWithFallback } from "@/lib/mal-lookup";
 import { browserHeaders } from "@/lib/browser-headers";
 import { SETTING_GROUPS, SEO_FIELDS } from "@/lib/site-settings";
 import {
@@ -230,12 +230,15 @@ export async function lookupVideoMalStats(
 ): Promise<{ ok: boolean; message: string }> {
   await requireAuth();
 
-  const video = await prisma.video.findUnique({ where: { id: videoId }, select: { title: true, slug: true } });
+  const video = await prisma.video.findUnique({
+    where: { id: videoId },
+    select: { title: true, slug: true, description: true },
+  });
   if (!video) return { ok: false, message: "Video no encontrado." };
 
   let match;
   try {
-    match = await lookupMyAnimeList(video.title);
+    match = await lookupMyAnimeListWithFallback(video.title, video.description);
   } catch (err) {
     const detail = err instanceof Error ? err.message : "error desconocido";
     return { ok: false, message: `No se pudo consultar MyAnimeList: ${detail}` };

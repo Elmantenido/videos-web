@@ -125,3 +125,34 @@ export async function lookupMyAnimeList(videoTitle: string): Promise<MalMatch | 
     members: extractStat(detailHtml, "Members"),
   };
 }
+
+/** Pulls out the comma-separated list saved after "Alternate Names:" in a
+ * video's description (see extractFromUrl() in admin/actions.ts, which is
+ * the only place that ever writes that line). */
+export function extractAlternateNames(description: string | null): string[] {
+  if (!description) return [];
+  const match = description.match(/Alternate Names:\s*(.+)/i);
+  if (!match) return [];
+  return match[1]
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => name.length >= 2);
+}
+
+/** Same as lookupMyAnimeList(), but if the title itself doesn't match
+ * anything, also tries each alternate name saved in the description
+ * (in order) until one does. */
+export async function lookupMyAnimeListWithFallback(
+  title: string,
+  description: string | null
+): Promise<MalMatch | null> {
+  const direct = await lookupMyAnimeList(title);
+  if (direct) return direct;
+
+  for (const altName of extractAlternateNames(description)) {
+    const match = await lookupMyAnimeList(altName);
+    if (match) return match;
+  }
+
+  return null;
+}
