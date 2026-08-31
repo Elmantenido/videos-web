@@ -108,6 +108,7 @@ export default async function AnalyticsPage({ searchParams }: Props) {
           <thead className="bg-gray-50 text-xs uppercase text-gray-500">
             <tr>
               <th className="px-3 py-2">Fecha</th>
+              <th className="px-3 py-2">Tipo</th>
               <th className="px-3 py-2">País</th>
               <th className="px-3 py-2">Página</th>
               <th className="px-3 py-2">Origen</th>
@@ -120,6 +121,17 @@ export default async function AnalyticsPage({ searchParams }: Props) {
               <tr key={visit.id} className="border-t">
                 <td className="whitespace-nowrap px-3 py-2 text-gray-500">
                   {visit.createdAt.toLocaleString()}
+                </td>
+                <td className="px-3 py-2">
+                  {visit.isBot ? (
+                    <span className="rounded bg-amber-100 px-2 py-1 text-xs text-amber-700">
+                      {visit.visitorType}
+                    </span>
+                  ) : (
+                    <span className="rounded bg-green-100 px-2 py-1 text-xs text-green-700">
+                      {visit.visitorType}
+                    </span>
+                  )}
                 </td>
                 <td className="px-3 py-2">{visit.country ?? "—"}</td>
                 <td className="max-w-[220px] truncate px-3 py-2" title={visit.landingPage}>

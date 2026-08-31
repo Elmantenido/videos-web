@@ -47,6 +47,7 @@ export async function ensureVisit(req: NextRequest, res: NextResponse) {
   const id = crypto.randomUUID();
   const ip = clientIp(req);
   const referrer = req.headers.get("referer") || null;
+  const userAgent = req.headers.get("user-agent") || null;
 
   // Create the row with country: null first so the response never waits on
   // the outbound geo-IP lookup below. Every request without a valid visit
@@ -55,7 +56,7 @@ export async function ensureVisit(req: NextRequest, res: NextResponse) {
   // -- a flood of cookie-less requests would turn that into a slow-request
   // denial-of-service against this server itself, not just a UX hiccup.
   await prisma.visit.create({
-    data: { id, landingPage: pathname, referrer, country: null, isAdmin: isAdminNow },
+    data: { id, landingPage: pathname, referrer, userAgent, country: null, isAdmin: isAdminNow },
   });
 
   res.cookies.set(VISIT_COOKIE, id, {

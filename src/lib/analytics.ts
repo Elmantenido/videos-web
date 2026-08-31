@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { classifyUserAgent } from "@/lib/visitor-type";
 
 export type VisitRow = {
   id: string;
@@ -8,6 +9,8 @@ export type VisitRow = {
   referrer: string | null;
   playsCount: number;
   durationSeconds: number;
+  isBot: boolean;
+  visitorType: string;
 };
 
 export async function getVisits(from: Date, to: Date): Promise<VisitRow[]> {
@@ -17,18 +20,23 @@ export async function getVisits(from: Date, to: Date): Promise<VisitRow[]> {
     take: 500,
   });
 
-  return visits.map((v) => ({
-    id: v.id,
-    createdAt: v.createdAt,
-    country: v.country,
-    landingPage: v.landingPage,
-    referrer: v.referrer,
-    playsCount: v.playsCount,
-    durationSeconds: Math.max(
-      0,
-      Math.round((v.lastSeenAt.getTime() - v.createdAt.getTime()) / 1000)
-    ),
-  }));
+  return visits.map((v) => {
+    const { isBot, label } = classifyUserAgent(v.userAgent);
+    return {
+      id: v.id,
+      createdAt: v.createdAt,
+      country: v.country,
+      landingPage: v.landingPage,
+      referrer: v.referrer,
+      playsCount: v.playsCount,
+      durationSeconds: Math.max(
+        0,
+        Math.round((v.lastSeenAt.getTime() - v.createdAt.getTime()) / 1000)
+      ),
+      isBot,
+      visitorType: label,
+    };
+  });
 }
 
 export async function getSummary(from: Date, to: Date) {

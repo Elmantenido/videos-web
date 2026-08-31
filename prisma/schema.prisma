@@ -93,6 +93,7 @@ model Visit {
   country     String?
   landingPage String
   referrer    String?
+  userAgent   String?
   isAdmin     Boolean    @default(false)
   playsCount  Int        @default(0)
   pageViews   PageView[]
