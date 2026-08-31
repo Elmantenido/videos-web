@@ -39,10 +39,16 @@ export default function VideoCarousel({
   const trackRef = useRef<HTMLDivElement>(null);
 
   // Drag-to-scroll: lets a mouse (or touch) drag move the carousel like the
-  // arrow buttons do, instead of requiring the arrows.
+  // arrow buttons do, instead of requiring the arrows. Uses classic
+  // mousedown/touchstart + window-level move/up listeners rather than the
+  // Pointer Events + setPointerCapture API -- that version worked in
+  // automated testing but not for real mouse drags in at least one real
+  // browser, most likely because it never called preventDefault() on the
+  // initial mousedown, leaving the browser free to start its own native
+  // drag/text-selection gesture that wins over ours.
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartXRef = useRef(0);
+  const dragOffsetRef = useRef(0);
   const draggedRef = useRef(false);
 
   useEffect(() => {
@@ -120,32 +126,66 @@ export default function VideoCarousel({
     setStartIndex((i) => Math.max(0, i - 1));
   }
 
-  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    if (loading || !stepPx) return;
-    setIsDragging(true);
-    draggedRef.current = false;
-    dragStartXRef.current = e.clientX;
-    e.currentTarget.setPointerCapture(e.pointerId);
-  }
-
-  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!isDragging) return;
-    const delta = e.clientX - dragStartXRef.current;
+  function moveDrag(clientX: number, startX: number) {
+    const delta = clientX - startX;
     if (Math.abs(delta) > 5) draggedRef.current = true;
+    dragOffsetRef.current = delta;
     setDragOffset(delta);
   }
 
-  function endDrag() {
-    if (!isDragging) return;
+  function finishDrag() {
     setIsDragging(false);
-
+    const offset = dragOffsetRef.current;
     const threshold = stepPx ? stepPx / 4 : 40;
-    if (dragOffset <= -threshold) {
-      goNext();
-    } else if (dragOffset >= threshold) {
-      goPrev();
-    }
+    if (offset <= -threshold) goNext();
+    else if (offset >= threshold) goPrev();
+    dragOffsetRef.current = 0;
     setDragOffset(0);
+  }
+
+  function handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
+    if (loading || !stepPx) return;
+    // Stop the browser from starting its own native drag/text-selection
+    // gesture on the link/image under the cursor, which would otherwise
+    // swallow the subsequent mousemove events before they reach us.
+    e.preventDefault();
+
+    draggedRef.current = false;
+    dragOffsetRef.current = 0;
+    setIsDragging(true);
+    const startX = e.clientX;
+
+    function onMouseMove(ev: MouseEvent) {
+      moveDrag(ev.clientX, startX);
+    }
+    function onMouseUp() {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      finishDrag();
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }
+
+  function handleTouchStart(e: React.TouchEvent<HTMLDivElement>) {
+    if (loading || !stepPx) return;
+    draggedRef.current = false;
+    dragOffsetRef.current = 0;
+    setIsDragging(true);
+    const startX = e.touches[0].clientX;
+
+    function onTouchMove(ev: TouchEvent) {
+      moveDrag(ev.touches[0].clientX, startX);
+    }
+    function onTouchEnd() {
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchEnd);
+      finishDrag();
+    }
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
+    window.addEventListener("touchend", onTouchEnd);
+    window.addEventListener("touchcancel", onTouchEnd);
   }
 
   function handleCardClick(e: React.MouseEvent) {
@@ -173,11 +213,8 @@ export default function VideoCarousel({
         <div
           className="carousel-track"
           ref={trackRef}
-          onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={endDrag}
-          onPointerCancel={endDrag}
-          onPointerLeave={endDrag}
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
           style={{
             transform: `translateX(${-(startIndex * stepPx) + dragOffset}px)`,
             transition: isDragging ? "none" : undefined,
