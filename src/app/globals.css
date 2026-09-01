@@ -166,7 +166,7 @@ em { color: var(--lime); font-family: Georgia, serif; font-style: italic; font-w
 .section-heading { align-items: end; display: flex; justify-content: space-between; margin-bottom: 28px; }
 .view-all { color: var(--muted); font-size: 17px; }
 .view-all span { color: var(--lime); font-size: 22px; margin-left: 7px; }
-.catalog-grid { display: grid; gap: 24px 16px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.catalog-grid { display: grid; gap: 24px 16px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
 .video-card { display: block; min-width: 0; }
 .video-views { color: var(--muted); font-size: 11px; margin: 4px 0 0; }
 .carousel { position: relative; }
@@ -176,7 +176,7 @@ em { color: var(--lime); font-family: Georgia, serif; font-style: italic; font-w
    code. The arrow buttons call scrollBy() on this same element. */
 .carousel-track { display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none; }
 .carousel-track::-webkit-scrollbar { display: none; }
-.carousel-item { flex: 0 0 calc((100% - 4 * 16px) / 5); min-width: 0; }
+.carousel-item { flex: 0 0 calc((100% - 3 * 16px) / 4); min-width: 0; }
 .carousel-arrow { align-items: center; backdrop-filter: blur(2px); background: rgba(20, 21, 20, .45); border: 1px solid rgba(244, 243, 237, .2); border-radius: 50%; box-shadow: 0 6px 20px rgba(0, 0, 0, .35); color: var(--foreground); cursor: pointer; display: flex; font-size: 44px; height: 80px; justify-content: center; line-height: 1; position: absolute; top: 50%; transform: translateY(-50%); width: 80px; z-index: 5; }
 .carousel-arrow:disabled { cursor: not-allowed; opacity: .25; }
 .carousel-arrow:not(:disabled):hover { background: rgba(172, 80, 200, .75); border-color: var(--lime); color: var(--foreground); }
