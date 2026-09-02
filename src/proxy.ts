@@ -14,8 +14,16 @@ export const config = {
   matcher: ["/((?!api|favicon.ico).*)"],
 };
 
+// _next/image (el optimizador de imágenes de Next) es exactamente
+// "/_next/image" con querystring, SIN barra ni nada después -- a
+// diferencia de _next/static/<hash>. Iba sin `(?:\/|$)` en la primera
+// versión, así que nunca hacía match y esos requests (si el sitio
+// llegara a usar next/image) habrían caído en la rama de ensureVisit()
+// como si fueran HTML, inflando htmlHits. Hoy el sitio no usa next/image
+// (usa <img> plano a propósito, ver los eslint-disable en video/[slug]),
+// así que no tuvo impacto real, pero queda bien para cuando se use.
 const ASSET_RE =
-  /^\/_next\/(static|image)\/|\.(?:css|js|mjs|map|woff2?|ttf|eot|png|jpe?g|gif|webp|avif|svg)$/i;
+  /^\/_next\/(?:static|image)(?:\/|$)|\.(?:css|js|mjs|map|woff2?|ttf|eot|png|jpe?g|gif|webp|avif|svg)$/i;
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
