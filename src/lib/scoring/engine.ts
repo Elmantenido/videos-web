@@ -4,10 +4,24 @@ import type { RawSignal } from "@/lib/scoring/request-signals";
 import { verifyClaimedCrawler } from "@/lib/scoring/bot-verify";
 import type { ClaimedCrawler } from "@/lib/scoring/ua-classify";
 import { getRecentHits } from "@/lib/scoring/request-log";
+import { getPendingAssetHits } from "@/lib/scoring/asset-hits";
 
 function decay(score: number, hoursElapsed: number, halfLifeHours: number): number {
   if (hoursElapsed <= 0 || score <= 0) return score;
   return score * Math.pow(0.5, hoursElapsed / halfLifeHours);
+}
+
+const PAGINATION_PARAM_RE = /[?&](?:page|p|offset|pagina)=(\d+)/i;
+const TRAILING_NUMBER_RE = /(\d+)(?:[/?#].*)?$/;
+
+/** Número de secuencia de una URL (path+query), para detectar recorridos
+ * ordenados: primero intenta un parámetro de paginación explícito
+ * (?page=3), y si no hay, el número al final del path (/video/3). */
+function extractSequenceNumber(url: string): number | null {
+  const paramMatch = url.match(PAGINATION_PARAM_RE);
+  if (paramMatch) return Number(paramMatch[1]);
+  const trailingMatch = url.match(TRAILING_NUMBER_RE);
+  return trailingMatch ? Number(trailingMatch[1]) : null;
 }
 
 export type TouchInfo = {
@@ -28,7 +42,13 @@ export async function recordSignals(ip: string, signals: RawSignal[], touch: Tou
   const config = await getScoringConfig();
   const existing = await prisma.ipScore.findUnique({ where: { ip } });
 
-  if (existing?.whitelisted) return;
+  // verifiedBot también se corta acá, no solo en runAggregateSignals --
+  // esta función también se llama directo desde request.ts por cada
+  // request (por ejemplo si algún día una señal de request-level llega a
+  // dispararle a un crawler verificado), y el criterio de aceptación es
+  // que un Googlebot verificado nunca sume puntaje, no solo que las
+  // señales agregadas lo ignoren.
+  if (existing?.whitelisted || existing?.verifiedBot) return;
 
   const now = new Date();
   const hoursElapsed = existing ? (now.getTime() - existing.lastSeenAt.getTime()) / 3_600_000 : 0;
@@ -152,18 +172,48 @@ export async function verifyAndScoreCrawler(ip: string, crawler: ClaimedCrawler)
 }
 
 const lastAggregateAt = new Map<string, number>();
+const pendingAggregateTimer = new Map<string, ReturnType<typeof setTimeout>>();
 const AGGREGATE_DEBOUNCE_MS = 5_000;
 const AGGREGATE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
-/** Señales que necesitan mirar el historial reciente de la IP (velocidad,
+/**
+ * Señales que necesitan mirar el historial reciente de la IP (velocidad,
  * varianza de intervalos, IDs secuenciales, ratio de assets...). Se corre
- * en segundo plano vía after(), no bloquea la respuesta, y se debounce
- * para no recalcular en cada request si llegan muy seguido. */
+ * en segundo plano vía after(), no bloquea la respuesta.
+ *
+ * Debounce de "flanco de salida": si una ráfaga de requests termina antes
+ * de que pasen los AGGREGATE_DEBOUNCE_MS, no alcanza con "ignorar y listo"
+ * -- eso dejaba el puntaje agregado congelado con los datos parciales del
+ * primer request de la ráfaga para siempre, porque nada volvía a llamar a
+ * esta función una vez que dejaban de llegar requests. Se detectó
+ * probando el fix de paginación por query string: un scraper de 8
+ * requests en ~1.2s nunca llegaba a puntuar sequential_id_walk. Ahora, si
+ * hay una llamada bloqueada por el debounce, se programa una pasada final
+ * para cuando termine la ventana, así siempre corre al menos una vez más
+ * con los datos completos de la ráfaga.
+ */
 export async function runAggregateSignals(ip: string): Promise<void> {
-  const last = lastAggregateAt.get(ip) ?? 0;
-  if (Date.now() - last < AGGREGATE_DEBOUNCE_MS) return;
-  lastAggregateAt.set(ip, Date.now());
+  const now = Date.now();
+  const elapsed = now - (lastAggregateAt.get(ip) ?? 0);
 
+  if (elapsed >= AGGREGATE_DEBOUNCE_MS) {
+    lastAggregateAt.set(ip, now);
+    await runAggregateSignalsNow(ip);
+    return;
+  }
+
+  if (!pendingAggregateTimer.has(ip)) {
+    const timer = setTimeout(() => {
+      pendingAggregateTimer.delete(ip);
+      lastAggregateAt.set(ip, Date.now());
+      runAggregateSignalsNow(ip).catch(() => {});
+    }, AGGREGATE_DEBOUNCE_MS - elapsed);
+    timer.unref();
+    pendingAggregateTimer.set(ip, timer);
+  }
+}
+
+async function runAggregateSignalsNow(ip: string): Promise<void> {
   const config = await getScoringConfig();
   const windowStart = new Date(Date.now() - AGGREGATE_WINDOW_MS);
 
@@ -227,7 +277,14 @@ export async function runAggregateSignals(ip: string): Promise<void> {
         detail: `desvío estándar ${Math.round(stddev)}ms sobre un promedio de ${Math.round(mean)}ms sobre ${intervals.length} intervalos`,
       });
     }
-    if (spanMinutes > 0 && hits.length / spanMinutes > 30) {
+
+    // Umbrales de velocidad/amplitud calibrados con una sesión "humana
+    // rápida" real (paginando 8 páginas con jitter de 0.6-2.6s entre
+    // clicks): esa sesión legítima llegaba a ~35-40 req/min y ~35-40
+    // páginas distintas/min. Los umbrales originales (30 y 20) la
+    // marcaban como scraper. Se subieron y se exige más muestra (10, no
+    // 5) para no reaccionar a una ráfaga corta de clicks rápidos.
+    if (hits.length >= 10 && spanMinutes > 0 && hits.length / spanMinutes > 90) {
       signals.push({
         key: "high_velocity",
         detail: `${hits.length} páginas en ${spanMinutes.toFixed(1)} min`,
@@ -235,18 +292,25 @@ export async function runAggregateSignals(ip: string): Promise<void> {
     }
 
     const distinctPaths = new Set(hits.map((h) => h.path));
-    if (spanMinutes > 0 && spanMinutes < 5 && distinctPaths.size / spanMinutes > 20) {
+    if (hits.length >= 10 && spanMinutes > 0 && spanMinutes < 3 && distinctPaths.size / spanMinutes > 40) {
       signals.push({
         key: "high_breadth_low_time",
         detail: `${distinctPaths.size} URLs distintas en ${spanMinutes.toFixed(1)} min`,
       });
     }
 
+    // Este sitio SÍ pagina por query string real (?page=2, ?page=3...) en
+    // /videos, /new-releases, /recent-uploads, /random -- a diferencia de
+    // un ID de path inventado, recorrer esas páginas en orden es algo que
+    // hace tanto un humano paginando rápido como Googlebot indexando el
+    // catálogo. Por eso esta señal exige ADEMÁS que no haya corrido ni un
+    // solo beacon de JS en toda la ventana (mismo chequeo que
+    // no_js_execution) -- un navegador real o un crawler que renderiza JS
+    // (Googlebot moderno) dispara el beacon en cada pageview, paginación
+    // incluida, así que ese combo casi no da falsos positivos.
+    const noJsInWindow = ipScore.htmlHits >= 3 && pageViews.length === 0;
     const ids = hits
-      .map((h) => {
-        const match = h.path.match(/(\d+)(?:[/?#].*)?$/);
-        return match ? Number(match[1]) : null;
-      })
+      .map((h) => extractSequenceNumber(h.path))
       .filter((n): n is number => n !== null);
     let bestRun = 1;
     let currentRun = 1;
@@ -254,20 +318,23 @@ export async function runAggregateSignals(ip: string): Promise<void> {
       currentRun = Math.abs(ids[i] - ids[i - 1]) === 1 ? currentRun + 1 : 1;
       bestRun = Math.max(bestRun, currentRun);
     }
-    if (bestRun >= 5) {
-      signals.push({ key: "sequential_id_walk", detail: `${bestRun} IDs consecutivos recorridos en orden` });
+    if (bestRun >= 5 && noJsInWindow) {
+      signals.push({ key: "sequential_id_walk", detail: `${bestRun} IDs/páginas consecutivas recorridas en orden, sin JS` });
     }
   }
 
-  if (ipScore.htmlHits >= 5) {
-    if (ipScore.assetHits === 0) {
-      signals.push({ key: "zero_asset_ratio", detail: `${ipScore.htmlHits} páginas HTML, 0 recursos estáticos` });
-    } else if (ipScore.assetHits / ipScore.htmlHits < 1) {
-      signals.push({
-        key: "low_asset_ratio",
-        detail: `ratio assets/HTML de ${(ipScore.assetHits / ipScore.htmlHits).toFixed(2)}`,
-      });
-    }
+  // + getPendingAssetHits: assetHits se escribe en lote cada 15s
+  // (asset-hits.ts) pero este paso corre casi al instante -- sin sumar lo
+  // pendiente, cualquier sesión real parece "0 assets" en sus primeros
+  // segundos. Solo se usa zero_asset_ratio, no un ratio con umbral: un
+  // navegador real cachea JS/CSS (immutable) y no vuelve a pedirlos en la
+  // misma sesión, así que "assets/HTML < X" baja solo en cualquier
+  // sesión real suficientemente larga -- no es un scraper, es el caché
+  // funcionando. "Cero assets en absoluto" sí se mantiene confiable
+  // sin importar cuánto dure la sesión.
+  const assetHits = ipScore.assetHits + getPendingAssetHits(ip);
+  if (ipScore.htmlHits >= 5 && assetHits === 0) {
+    signals.push({ key: "zero_asset_ratio", detail: `${ipScore.htmlHits} páginas HTML, 0 recursos estáticos` });
   }
 
   const fingerprint = ipScore.fingerprint ?? visits.find((v) => v.fingerprint)?.fingerprint;
@@ -293,10 +360,44 @@ const PURGE_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
 /** Purga liviana en vez de un cron dedicado (este proyecto no tiene job
  * scheduler): se aprovecha el paso agregado, que ya corre en segundo
- * plano, para revisar cada tantas horas si toca borrar señales viejas. */
+ * plano, para revisar cada tantas horas si toca borrar señales viejas y
+ * anonimizar IPs viejas en el módulo de visitas existente. */
 async function purgeOldData(config: ScoringConfig): Promise<void> {
   if (Date.now() - lastPurgeAt < PURGE_INTERVAL_MS) return;
   lastPurgeAt = Date.now();
   const cutoff = new Date(Date.now() - config.retentionDays * 24 * 60 * 60 * 1000);
   await prisma.scoreSignal.deleteMany({ where: { createdAt: { lt: cutoff } } }).catch(() => {});
+  await anonymizeOldVisitIps(config).catch(() => {});
+}
+
+const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.\d{1,3}$/;
+
+/** Restricción sección 5: "opción de anonimizar el último octeto de la
+ * IP en los registros históricos". Desactivado por default
+ * (anonymizeVisitIpAfterDays: 0); aplica solo a Visit.ip -- el módulo de
+ * visitas preexistente -- porque IpScore/ScoreSignal usan la IP exacta
+ * como clave del puntaje y no se pueden anonimizar sin romper la
+ * detección (ver el comentario en config.ts). Procesa de a lotes chicos
+ * para no bloquear el event loop si hay muchas visitas viejas. */
+async function anonymizeOldVisitIps(config: ScoringConfig): Promise<void> {
+  if (config.anonymizeVisitIpAfterDays <= 0) return;
+  const cutoff = new Date(Date.now() - config.anonymizeVisitIpAfterDays * 24 * 60 * 60 * 1000);
+
+  const candidates = await prisma.visit.findMany({
+    where: { createdAt: { lt: cutoff }, ip: { not: null } },
+    select: { id: true, ip: true },
+    take: 500,
+  });
+
+  const updates = candidates
+    .map((v) => {
+      const match = v.ip!.match(IPV4_RE);
+      if (!match) return null; // no es IPv4, o ya está anonimizada (termina en .0 pero no matchea si ya se hizo antes de más)
+      const anonymized = `${match[1]}.${match[2]}.${match[3]}.0`;
+      if (anonymized === v.ip) return null; // ya anonimizada
+      return prisma.visit.update({ where: { id: v.id }, data: { ip: anonymized } });
+    })
+    .filter((u): u is NonNullable<typeof u> => u !== null);
+
+  if (updates.length) await prisma.$transaction(updates);
 }

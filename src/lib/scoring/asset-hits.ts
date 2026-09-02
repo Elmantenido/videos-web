@@ -11,6 +11,18 @@ export function recordAssetHit(ip: string): void {
   pending.set(ip, (pending.get(ip) ?? 0) + 1);
 }
 
+/**
+ * Lo que todavía no se volcó a IpScore.assetHits. El paso agregado
+ * (engine.ts) corre casi al instante en cada request, muy por debajo de
+ * FLUSH_INTERVAL_MS -- sin esto, cualquier sesión (humana o no) parece
+ * tener 0 assets durante sus primeros ~15s, aunque el navegador ya los
+ * haya pedido, y como la señal tiene cooldown queda marcada igual
+ * después de que el dato se corrige.
+ */
+export function getPendingAssetHits(ip: string): number {
+  return pending.get(ip) ?? 0;
+}
+
 async function flush(): Promise<void> {
   if (pending.size === 0) return;
   const batch = Array.from(pending.entries());

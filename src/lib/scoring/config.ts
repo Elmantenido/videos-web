@@ -20,12 +20,13 @@ export type SignalKey =
   | "high_velocity"
   | "low_interval_variance"
   | "zero_asset_ratio"
-  | "low_asset_ratio"
   | "no_js_execution"
   | "sequential_id_walk"
   | "high_breadth_low_time"
   | "fingerprint_ip_rotation"
-  | "honeypot";
+  | "honeypot"
+  | "direct_api_access"
+  | "suspicious_query_param";
 
 export type ScoringConfig = {
   weights: Record<SignalKey, number>;
@@ -39,6 +40,13 @@ export type ScoringConfig = {
   signalCooldownMinutes: number;
   /** Días de retención de ScoreSignal/PageView antes de purgarlos. */
   retentionDays: number;
+  /** Opción de la sección 5 del pedido: anonimizar el último octeto de
+   * Visit.ip para visitas más viejas que esto. 0 = desactivado (default).
+   * No aplica a IpScore/ScoreSignal -- esas tablas usan la IP exacta como
+   * clave primaria del puntaje, así que "anonimizarla" fusionaría IPs
+   * distintas entre sí; su privacidad ya se resuelve con decaimiento +
+   * purga (retentionDays) en vez de anonimización in-place. */
+  anonymizeVisitIpAfterDays: number;
 };
 
 export const DEFAULT_SCORING_CONFIG: ScoringConfig = {
@@ -54,17 +62,19 @@ export const DEFAULT_SCORING_CONFIG: ScoringConfig = {
     high_velocity: 20,
     low_interval_variance: 25,
     zero_asset_ratio: 35,
-    low_asset_ratio: 15,
     no_js_execution: 30,
     sequential_id_walk: 30,
     high_breadth_low_time: 20,
     fingerprint_ip_rotation: 40,
     honeypot: 1000, // fuerza "confirmado" de inmediato, ver engine.ts
+    direct_api_access: 25,
+    suspicious_query_param: 15,
   },
   thresholds: { observado: 20, sospechoso: 50, confirmado: 90 },
   decayHalfLifeHours: 12,
   signalCooldownMinutes: 5,
   retentionDays: 90,
+  anonymizeVisitIpAfterDays: 0,
 };
 
 export const getScoringConfig = cache(async (): Promise<ScoringConfig> => {
@@ -79,6 +89,8 @@ export const getScoringConfig = cache(async (): Promise<ScoringConfig> => {
       signalCooldownMinutes:
         override.signalCooldownMinutes ?? DEFAULT_SCORING_CONFIG.signalCooldownMinutes,
       retentionDays: override.retentionDays ?? DEFAULT_SCORING_CONFIG.retentionDays,
+      anonymizeVisitIpAfterDays:
+        override.anonymizeVisitIpAfterDays ?? DEFAULT_SCORING_CONFIG.anonymizeVisitIpAfterDays,
     };
   } catch {
     return DEFAULT_SCORING_CONFIG;

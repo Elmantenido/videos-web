@@ -4,6 +4,30 @@ import type { SignalKey } from "@/lib/scoring/config";
 
 export type RawSignal = { key: SignalKey; detail?: string };
 
+// "json", "feed", "format=json", "export", "dump"... no hay ningún uso
+// legítimo de estos en el sitio (no es WordPress, no tiene esa
+// convención) -- si aparecen, alguien está probando a mano un patrón
+// típico de scraping de otros sitios.
+const SUSPICIOUS_QUERY_RE = /[?&](?:json|feed|export|dump)\b|format=json/i;
+
+/**
+ * Acceso directo a un endpoint de datos (spec: "acceso directo a
+ * endpoints de datos"). GET a /api/* sin Referer -- en este sitio TODOS
+ * los fetch() legítimos a /api (buscador en vivo, carrusel de random,
+ * trending, reportar problema, tracking de reproducción) salen desde una
+ * página ya cargada, y con Referrer-Policy: strict-origin-when-cross-origin
+ * (next.config.ts) el navegador manda el Referer completo en same-origin.
+ * Sin Referer en un GET a /api es casi siempre un cliente HTTP crudo
+ * pegándole al endpoint directo, no un fetch() disparado desde el sitio.
+ * Los beacons propios (/api/visit/*) quedan afuera: no son "datos".
+ */
+function evaluateApiSignal(req: NextRequest, pathname: string): RawSignal[] {
+  if (!pathname.startsWith("/api/") || pathname.startsWith("/api/visit/")) return [];
+  if (req.method !== "GET") return [];
+  if (req.headers.get("referer")) return [];
+  return [{ key: "direct_api_access", detail: pathname + req.nextUrl.search }];
+}
+
 /**
  * Señales que se pueden evaluar de forma síncrona con lo que ya viene en
  * el request (sin I/O, sin await) -- se llaman en proxy.ts en el camino
@@ -15,6 +39,12 @@ export function evaluateRequestSignals(req: NextRequest, ua: UaClassification): 
   const signals: RawSignal[] = [];
   const headers = req.headers;
   const userAgent = headers.get("user-agent") ?? undefined;
+  const pathname = req.nextUrl.pathname;
+
+  signals.push(...evaluateApiSignal(req, pathname));
+  if (SUSPICIOUS_QUERY_RE.test(req.nextUrl.search)) {
+    signals.push({ key: "suspicious_query_param", detail: req.nextUrl.search });
+  }
 
   if (ua.category === "empty") {
     signals.push({ key: "empty_ua" });

@@ -2,16 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 import { ensureVisit, clientIp } from "@/lib/visit";
 import { recordAssetHit } from "@/lib/scoring/asset-hits";
-import { scheduleScoring } from "@/lib/scoring/request";
+import { scheduleScoring, scheduleApiScoring } from "@/lib/scoring/request";
 
-// A diferencia del matcher anterior, este SÍ deja pasar _next/static y
-// _next/image -- el motor de detección de scraping necesita ver esos
-// hits para medir el ratio de recursos estáticos vs. HTML (la señal más
-// discriminante contra scrapers). La rama de "es un asset" de abajo es
-// intencionalmente barata (sin Prisma, sin await) para no meterle
-// latencia a esos requests.
+// Deja pasar TODO menos favicon.ico -- ni _next/static/_next/image (el
+// motor necesita verlos para el ratio de assets) ni /api (necesita
+// verlos para detectar acceso directo a endpoints de datos). Ambos casos
+// se resuelven en ramas baratas más abajo, sin tocar ensureVisit() ni la
+// lógica propia de cada ruta de /api.
 export const config = {
-  matcher: ["/((?!api|favicon.ico).*)"],
+  matcher: ["/((?!favicon.ico).*)"],
 };
 
 // _next/image (el optimizador de imágenes de Next) es exactamente
@@ -31,6 +30,16 @@ export async function proxy(req: NextRequest) {
   if (ASSET_RE.test(pathname)) {
     const ip = clientIp(req);
     if (ip) recordAssetHit(ip);
+    return NextResponse.next();
+  }
+
+  // Las rutas de /api manejan su propia autenticación (ADMIN_KEY, sesión,
+  // etc.) -- acá solo se agrega puntaje, sin tocar el resto del flujo
+  // (sin ensureVisit, sin cookie de visita, sin redirect de /admin).
+  if (pathname.startsWith("/api/")) {
+    const ip = clientIp(req);
+    const isAdminNow = verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
+    if (!isAdminNow) scheduleApiScoring(req, ip, pathname);
     return NextResponse.next();
   }
 
