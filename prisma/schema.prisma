@@ -102,12 +102,14 @@ model Visit {
   referrer    String?
   userAgent   String?
   ip          String?
+  fingerprint String?
   isAdmin     Boolean    @default(false)
   playsCount  Int        @default(0)
   pageViews   PageView[]
 
   @@index([createdAt])
   @@index([ip, createdAt])
+  @@index([fingerprint])
 }
 
 model PageView {
@@ -115,9 +117,51 @@ model PageView {
   visitId   String
   visit     Visit    @relation(fields: [visitId], references: [id], onDelete: Cascade)
   path      String
+  referrer  String?
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+// Motor de detección de scraping (fase 1: señales + puntaje).
+// Puntaje acumulado por IP; `fingerprint` guarda la última huella de
+// headers vista para esa IP y sirve para detectar rotación de IPs con la
+// misma huella (ver scoreByFingerprint en lib/scoring/engine.ts).
+model IpScore {
+  ip           String        @id
+  fingerprint  String?
+  score        Int           @default(0)
+  state        String        @default("observado") // observado | sospechoso | confirmado
+  requestCount Int           @default(0)
+  assetHits    Int           @default(0)
+  htmlHits     Int           @default(0)
+  verifiedBot  Boolean       @default(false)
+  botName      String?
+  whitelisted  Boolean       @default(false)
+  honeypotHit  Boolean       @default(false)
+  country      String?
+  firstSeenAt  DateTime      @default(now())
+  lastSeenAt   DateTime      @default(now())
+  signals      ScoreSignal[]
+
+  @@index([score])
+  @@index([state])
+  @@index([fingerprint])
+}
+
+// Desglose auditable: una fila por cada vez que una señal disparó y sumó
+// puntos para una IP. Nunca se sobreescribe, solo se purga por retención.
+model ScoreSignal {
+  id        Int      @id @default(autoincrement())
+  ip        String
+  ipScore   IpScore  @relation(fields: [ip], references: [ip], onDelete: Cascade)
+  key       String
+  weight    Int
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([ip, createdAt])
+  @@index([key, createdAt])
 }
 
 model SearchQuery {

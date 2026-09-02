@@ -5,6 +5,7 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { siteUrl } from "@/lib/seo";
 import VisitHeartbeat from "@/components/VisitHeartbeat";
 import PageViewTracker from "@/components/PageViewTracker";
+import HoneypotLink from "@/components/HoneypotLink";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -90,6 +91,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <PageViewTracker />
         <VisitHeartbeat />
+        <HoneypotLink />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteLd) }}

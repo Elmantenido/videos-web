@@ -6,7 +6,7 @@ import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 export const VISIT_COOKIE = "visit_id";
 export const SESSION_WINDOW_SECONDS = 30 * 60; // 30 min of inactivity = new visit
 
-function clientIp(req: NextRequest): string | null {
+export function clientIp(req: NextRequest): string | null {
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
   return req.headers.get("x-real-ip");

@@ -8,6 +8,7 @@
   "scripts": {
     "seed": "prisma db seed",
     "clean-slugs": "tsx prisma/clean-slugs.ts",
+    "simulate-scraper": "tsx scripts/simulate-scraper.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

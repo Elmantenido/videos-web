@@ -6,6 +6,7 @@ import { extractPreviewImages } from "@/lib/preview";
 import { getSiteSettings } from "@/lib/site-settings";
 import { absoluteUrl, toIsoDuration } from "@/lib/seo";
 import { isEmbedUrl } from "@/lib/embed";
+import { canaryMarker } from "@/lib/canary";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -465,6 +466,7 @@ export default async function VideoPage({ params }: Props) {
                 Description
               </h2>
               <p className="leading-relaxed text-gray-300">{video.description}</p>
+              <span style={{ display: "none" }} aria-hidden="true" data-cid={canaryMarker(video.id)} />
             </div>
           )}
         </div>

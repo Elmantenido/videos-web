@@ -10,7 +10,7 @@ export default function PageViewTracker() {
     fetch("/api/visit/hit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ path: pathname }),
+      body: JSON.stringify({ path: pathname, referrer: document.referrer || null }),
     }).catch(() => {});
   }, [pathname]);
 

@@ -8,7 +8,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/admin", "/api"],
+      // /preview-full es un honeypot (ver HoneypotLink.tsx): ningún
+      // crawler legítimo debería pedirla nunca. No es contenido real.
+      disallow: ["/admin", "/api", "/preview-full"],
     },
     sitemap: `${siteUrl()}/sitemap.xml`,
   };

@@ -10,9 +10,10 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const path = typeof body.path === "string" ? body.path : "/";
+  const referrer = typeof body.referrer === "string" ? body.referrer : null;
 
   await Promise.all([
-    prisma.pageView.create({ data: { visitId, path } }).catch(() => {}),
+    prisma.pageView.create({ data: { visitId, path, referrer } }).catch(() => {}),
     prisma.visit
       .update({ where: { id: visitId }, data: { lastSeenAt: new Date() } })
       .catch(() => {}),
