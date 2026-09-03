@@ -104,6 +104,12 @@ export const SETTING_GROUPS: {
         default: "",
         multiline: true,
       },
+      {
+        key: "footer_partners_html",
+        label: "HTML de socios/partners (se muestra tal cual en el pie de página; vacío = no se muestra)",
+        default: "",
+        multiline: true,
+      },
     ],
   },
 ];

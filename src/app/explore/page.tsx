@@ -87,7 +87,7 @@ export default async function ExplorePage() {
           brandSuffix={s.brand_suffix}
         />
 
-        <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} keywordPhrase={s.footer_keyword_phrase} />
+        <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} keywordPhrase={s.footer_keyword_phrase} partnersHtml={s.footer_partners_html} />
       </div>
     </main>
   );
