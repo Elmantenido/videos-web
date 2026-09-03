@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 
 function Icon({ children }: { children: ReactNode }) {
@@ -19,10 +19,6 @@ function Icon({ children }: { children: ReactNode }) {
       {children}
     </svg>
   );
-}
-
-function ChevronIcon({ direction }: { direction: "left" | "right" }) {
-  return <Icon>{direction === "left" ? <path d="M15 6l-6 6 6 6" /> : <path d="M9 6l6 6-6 6" />}</Icon>;
 }
 
 const NAV_ITEMS: { href: string; label: string; icon: ReactNode }[] = [
@@ -122,41 +118,13 @@ const NAV_ITEMS: { href: string; label: string; icon: ReactNode }[] = [
   },
 ];
 
-// Desktop-only preference: the rail shows icons + labels the first time a
-// visitor arrives (no stored value yet), and remembers whether they
-// collapsed it to icons-only on a later visit. Read via useSyncExternalStore
-// (not useState+useEffect) so the very first client render matches the
-// server-rendered HTML (always "expanded") instead of briefly flashing the
-// wrong state while a localStorage-reading effect catches up.
-const COLLAPSE_STORAGE_KEY = "sidebar-collapsed";
-let collapsedCache: boolean | null = null;
-const collapseListeners = new Set<() => void>();
-
-function readCollapsed() {
-  if (collapsedCache === null) {
-    collapsedCache = localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1";
-  }
-  return collapsedCache;
-}
-
-function writeCollapsed(value: boolean) {
-  collapsedCache = value;
-  localStorage.setItem(COLLAPSE_STORAGE_KEY, value ? "1" : "0");
-  collapseListeners.forEach((listener) => listener());
-}
-
-function subscribeCollapsed(listener: () => void) {
-  collapseListeners.add(listener);
-  return () => collapseListeners.delete(listener);
-}
-
-function getServerSnapshot() {
-  return false;
-}
-
 export default function SidebarNav() {
   const [open, setOpen] = useState(false);
-  const collapsed = useSyncExternalStore(subscribeCollapsed, readCollapsed, getServerSnapshot);
+  // The drawer's markup (nav list + icons) never needs to exist in the DOM
+  // until someone actually opens the menu -- there's nothing to show before
+  // that, so skip mounting it on initial page load and keep it mounted once
+  // opened (so the close transition still animates instead of vanishing).
+  const [everOpened, setEverOpened] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -167,15 +135,16 @@ export default function SidebarNav() {
     return () => document.removeEventListener("keydown", handleKey);
   }, [open]);
 
-  function toggleCollapsed() {
-    writeCollapsed(!collapsed);
+  function handleOpen() {
+    setEverOpened(true);
+    setOpen(true);
   }
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={handleOpen}
         aria-label="Open menu"
         aria-expanded={open}
         className="icon-button sidebar-toggle"
@@ -183,46 +152,40 @@ export default function SidebarNav() {
         ☰
       </button>
 
-      <div
-        className={`sidebar-overlay ${open ? "is-open" : ""}`}
-        onClick={() => setOpen(false)}
-        aria-hidden={!open}
-      >
-        <nav
-          className={`sidebar-drawer ${collapsed ? "is-collapsed" : ""}`}
-          aria-label="Site navigation"
-          onClick={(e) => e.stopPropagation()}
+      {everOpened && (
+        <div
+          className={`sidebar-overlay ${open ? "is-open" : ""}`}
+          onClick={() => setOpen(false)}
+          aria-hidden={!open}
         >
-          <div className="sidebar-drawer-top">
-            <button
-              type="button"
-              onClick={() => setOpen(false)}
-              aria-label="Close menu"
-              className="sidebar-close"
-            >
-              ✕
-            </button>
-            <button
-              type="button"
-              onClick={toggleCollapsed}
-              aria-label={collapsed ? "Expand menu" : "Collapse menu"}
-              className="sidebar-collapse-toggle"
-            >
-              <ChevronIcon direction={collapsed ? "right" : "left"} />
-            </button>
-          </div>
-          <ul className="sidebar-list">
-            {NAV_ITEMS.map((item) => (
-              <li key={item.href}>
-                <Link href={item.href} onClick={() => setOpen(false)} title={item.label}>
-                  <span className="sidebar-icon">{item.icon}</span>
-                  <span className="sidebar-label">{item.label}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </div>
+          <nav
+            className="sidebar-drawer"
+            aria-label="Site navigation"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sidebar-drawer-top">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close menu"
+                className="sidebar-close"
+              >
+                ✕
+              </button>
+            </div>
+            <ul className="sidebar-list">
+              {NAV_ITEMS.map((item) => (
+                <li key={item.href}>
+                  <Link href={item.href} onClick={() => setOpen(false)} title={item.label}>
+                    <span className="sidebar-icon">{item.icon}</span>
+                    <span className="sidebar-label">{item.label}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+      )}
     </>
   );
 }

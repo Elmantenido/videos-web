@@ -99,39 +99,10 @@ a { color: inherit; text-decoration: none; }
 .sidebar-overlay.is-open .sidebar-drawer { transform: translateX(0); }
 .sidebar-drawer-top { align-items: center; display: flex; justify-content: space-between; padding: 0 12px 12px 24px; }
 .sidebar-close { background: transparent; border: 0; color: var(--foreground); cursor: pointer; font-size: 20px; padding: 10px; }
-.sidebar-collapse-toggle { align-items: center; background: transparent; border: 1px solid var(--line); border-radius: 8px; color: var(--foreground); cursor: pointer; display: none; flex-shrink: 0; height: 36px; justify-content: center; padding: 0; width: 36px; }
-.sidebar-collapse-toggle:hover { border-color: var(--lime); color: var(--lime); }
 .sidebar-list { display: flex; flex-direction: column; list-style: none; margin: 0; padding: 0; }
 .sidebar-list a { align-items: center; color: var(--muted); display: flex; font-size: 16px; gap: 14px; padding: 14px 24px; transition: background .15s, color .15s; }
 .sidebar-list a:hover { background: rgba(244, 243, 237, .06); color: var(--foreground); }
 .sidebar-icon { display: flex; flex-shrink: 0; }
-/* Above 1024px the drawer stops being an overlay you open/close and
-   becomes a persistent rail that's always on screen -- the hamburger and
-   the "✕" close button no longer apply, replaced by a collapse toggle
-   living on the rail itself. body's padding-left (via :has(), reacting to
-   the drawer's own class) reserves the room for it across every page
-   without needing to touch each page's layout individually. Below 1024px
-   (including tablet-ish widths like 761-1023px) there simply isn't
-   reliably enough room next to the logo and search box for a permanently
-   reserved rail, so those widths keep the overlay-drawer behavior instead. */
-@media (min-width: 1024px) {
-  /* Narrower than the mobile overlay's 280px -- as a persistent rail this
-     width isn't just a drawer's own visual choice anymore, it's space
-     taken from every page's content, so it's sized to just fit the
-     longest label ("Recent Uploads") plus padding instead of matching
-     the mobile drawer's more generous overlay width. */
-  :root { --sidebar-width-expanded: 224px; --sidebar-width-collapsed: 72px; }
-  .sidebar-toggle { display: none; }
-  .sidebar-close { display: none; }
-  .sidebar-collapse-toggle { display: inline-flex; }
-  .sidebar-overlay { background: none; opacity: 1; pointer-events: none; }
-  .sidebar-drawer { pointer-events: auto; transform: none; width: var(--sidebar-width-expanded); z-index: 250; }
-  .sidebar-drawer.is-collapsed { width: var(--sidebar-width-collapsed); }
-  .sidebar-drawer.is-collapsed .sidebar-list a { justify-content: center; padding-left: 0; padding-right: 0; }
-  .sidebar-drawer.is-collapsed .sidebar-label { display: none; }
-  body:has(.sidebar-drawer) { padding-left: var(--sidebar-width-expanded); transition: padding-left .2s ease; }
-  body:has(.sidebar-drawer.is-collapsed) { padding-left: var(--sidebar-width-collapsed); }
-}
 .hero { background-position: center; background-size: cover; height: min(590px, 65vh); min-height: 440px; overflow: hidden; position: relative; }
 .hero-shade { background: linear-gradient(90deg, rgba(10, 12, 10, .98) 0%, rgba(10, 12, 10, .76) 38%, rgba(10, 12, 10, .08) 100%), linear-gradient(0deg, #101110 0%, transparent 25%); inset: 0; position: absolute; }
 .hero-content { left: 8%; max-width: 560px; position: absolute; top: 22%; z-index: 1; }
@@ -183,6 +154,12 @@ em { color: var(--lime); font-family: Georgia, serif; font-style: italic; font-w
 .carousel-track { display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth; scrollbar-width: none; -ms-overflow-style: none; }
 .carousel-track::-webkit-scrollbar { display: none; }
 .carousel-item { flex: 0 0 calc((100% - 3 * 16px) / 4); min-width: 0; }
+/* The sidebar is overlay-only now (no permanent desktop rail reserving
+   space), so from 1024px up there's room to show 6 covers per carousel
+   instead of 4. */
+@media (min-width: 1024px) {
+  .carousel-item { flex-basis: calc((100% - 5 * 16px) / 6); }
+}
 .carousel-arrow { align-items: center; backdrop-filter: blur(2px); background: rgba(20, 21, 20, .45); border: 1px solid rgba(244, 243, 237, .2); border-radius: 50%; box-shadow: 0 6px 20px rgba(0, 0, 0, .35); color: var(--foreground); cursor: pointer; display: flex; font-size: 44px; height: 80px; justify-content: center; line-height: 1; position: absolute; top: 50%; transform: translateY(-50%); width: 80px; z-index: 5; }
 .carousel-arrow:disabled { cursor: not-allowed; opacity: .25; }
 .carousel-arrow:not(:disabled):hover { background: rgba(172, 80, 200, .75); border-color: var(--lime); color: var(--foreground); }
