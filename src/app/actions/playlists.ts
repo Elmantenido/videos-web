@@ -71,6 +71,20 @@ export async function addVideoToPlaylist(
   return { ok: true, playlistId: playlist.id, slug: playlist.slug };
 }
 
+export async function deletePlaylist(playlistId: string): Promise<ActionResult> {
+  const userId = await getCurrentUserId();
+  if (!userId) return { ok: false, error: "unauthenticated" };
+
+  const playlist = await prisma.playlist.findUnique({ where: { id: playlistId } });
+  if (!playlist) return { ok: false, error: "not_found" };
+  if (playlist.userId !== userId) return { ok: false, error: "forbidden" };
+
+  // PlaylistItem/PlaylistFollow rows cascade-delete (onDelete: Cascade in schema).
+  await prisma.playlist.delete({ where: { id: playlistId } });
+  revalidatePath("/account");
+  return { ok: true };
+}
+
 export async function removeVideoFromPlaylist(playlistId: string, videoId: number): Promise<ActionResult> {
   const userId = await getCurrentUserId();
   if (!userId) return { ok: false, error: "unauthenticated" };

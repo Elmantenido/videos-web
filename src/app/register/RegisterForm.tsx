@@ -8,18 +8,18 @@ export default function RegisterForm() {
 
   return (
     <form action={formAction} className="auth-form">
-      <input type="text" name="name" placeholder="Nombre" required autoFocus className="auth-input" />
+      <input type="text" name="name" placeholder="Name" required autoFocus className="auth-input" />
       <input type="email" name="email" placeholder="Email" required className="auth-input" />
       <input
         type="password"
         name="password"
-        placeholder="Contraseña (mínimo 8 caracteres)"
+        placeholder="Password (min. 8 characters)"
         required
         minLength={8}
         className="auth-input"
       />
       <button type="submit" disabled={pending} className="auth-button">
-        {pending ? "Creando cuenta..." : "Crear cuenta"}
+        {pending ? "Creating account..." : "Create Account"}
       </button>
       {error && <p className="auth-error">{error}</p>}
     </form>

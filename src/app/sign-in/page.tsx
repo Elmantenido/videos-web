@@ -19,17 +19,17 @@ export default async function SignInPage() {
           <div className="auth-card">
             <h1>Sign In</h1>
             <SignInForm />
-            <div className="auth-divider"><span>o</span></div>
+            <div className="auth-divider"><span>or</span></div>
             <form action={signInWithGoogle}>
-              <button type="submit" className="auth-google-button">Continuar con Google</button>
+              <button type="submit" className="auth-google-button">Continue with Google</button>
             </form>
             <p className="auth-switch">
-              ¿No tenés cuenta? <Link href="/register">Create Account</Link>
+              Don&apos;t have an account? <Link href="/register">Create Account</Link>
             </p>
           </div>
         </div>
       </div>
-      <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} keywordPhrase={s.footer_keyword_phrase} />
+      <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} keywordPhrase={s.footer_keyword_phrase} partnersHtml={s.footer_partners_html} />
     </main>
   );
 }

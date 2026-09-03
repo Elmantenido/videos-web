@@ -10,7 +10,7 @@ export async function signInWithCredentials(_prevState: string | null, formData:
   try {
     await signIn("credentials", { email, password, redirectTo: "/" });
   } catch (err) {
-    if (err instanceof AuthError) return "Email o contraseña incorrectos.";
+    if (err instanceof AuthError) return "Incorrect email or password.";
     throw err;
   }
   return null;

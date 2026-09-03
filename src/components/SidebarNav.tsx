@@ -191,13 +191,13 @@ export default function SidebarNav({ loggedIn }: Props) {
                 <>
                   <li>
                     <Link href="/account" onClick={() => setOpen(false)}>
-                      <span className="sidebar-label">Mis playlists</span>
+                      <span className="sidebar-label">My Playlists</span>
                     </Link>
                   </li>
                   <li>
                     <form action={signOutAction}>
                       <button type="submit" onClick={() => setOpen(false)}>
-                        <span className="sidebar-label">Salir</span>
+                        <span className="sidebar-label">Sign Out</span>
                       </button>
                     </form>
                   </li>

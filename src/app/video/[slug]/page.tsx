@@ -203,21 +203,35 @@ type RelatedPlaylist = {
   ownerName: string | null;
   itemCount: number;
   followerCount: number;
+  coverThumbnail: string | null;
 };
 
 function RelatedPlaylistRow({ playlist }: { playlist: RelatedPlaylist }) {
   return (
     <Link
       href={`/playlists/${playlist.slug}`}
-      className="flex items-center justify-between rounded border border-white/10 p-3 transition-colors hover:border-[var(--lime)]"
+      className="flex gap-3 rounded p-1 transition-colors hover:bg-white/5"
     >
-      <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-gray-200">{playlist.name}</p>
-        <p className="mt-0.5 text-xs text-gray-500">
-          {playlist.ownerName ?? "Usuario"} · {playlist.itemCount} videos
-        </p>
+      <div className="aspect-[2/3] w-20 flex-shrink-0 overflow-hidden rounded bg-white/10">
+        {playlist.coverThumbnail && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={playlist.coverThumbnail}
+            alt={playlist.name}
+            width={160}
+            height={240}
+            loading="lazy"
+            className="h-full w-full object-cover"
+          />
+        )}
       </div>
-      <span className="flex-shrink-0 text-xs text-gray-500">{playlist.followerCount} ♥</span>
+      <div className="flex min-w-0 flex-col justify-center">
+        <p className="truncate text-sm font-semibold text-gray-200">{playlist.name}</p>
+        <p className="mt-1 text-xs text-gray-500">
+          By {playlist.ownerName ?? "a user"} · {playlist.itemCount} videos
+        </p>
+        <p className="mt-0.5 text-xs text-gray-500">{playlist.followerCount} ♥ followers</p>
+      </div>
     </Link>
   );
 }
@@ -265,7 +279,11 @@ export default async function VideoPage({ params }: Props) {
     getVoteState(video.id),
     prisma.playlist.findMany({
       where: { items: { some: { videoId: video.id } } },
-      include: { user: { select: { name: true } }, _count: { select: { items: true, followers: true } } },
+      include: {
+        user: { select: { name: true } },
+        _count: { select: { items: true, followers: true } },
+        items: { orderBy: { addedAt: "desc" }, take: 1, select: { video: { select: { thumbnail: true } } } },
+      },
       orderBy: { followers: { _count: "desc" } },
       take: 6,
     }),
@@ -277,6 +295,7 @@ export default async function VideoPage({ params }: Props) {
     ownerName: p.user.name,
     itemCount: p._count.items,
     followerCount: p._count.followers,
+    coverThumbnail: p.items[0]?.video.thumbnail ?? null,
   }));
   const previewImages = extractPreviewImages(video.previewHtml ?? "");
 
@@ -490,6 +509,14 @@ export default async function VideoPage({ params }: Props) {
               </a>
             )}
 
+            <VideoActions
+              videoId={video.id}
+              initialLikes={voteState.likes}
+              initialDislikes={voteState.dislikes}
+              initialMyVote={voteState.myVote}
+              loggedIn={Boolean(session?.user)}
+            />
+
             <ReportProblemButton videoId={video.id} />
           </div>
 
@@ -517,18 +544,10 @@ export default async function VideoPage({ params }: Props) {
             </div>
           )}
 
-          <VideoActions
-            videoId={video.id}
-            initialLikes={voteState.likes}
-            initialDislikes={voteState.dislikes}
-            initialMyVote={voteState.myVote}
-            loggedIn={Boolean(session?.user)}
-          />
-
           {relatedPlaylists.length > 0 && (
             <div className="mt-6 border-t border-white/10 pt-4">
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                Playlists con este video
+                Playlists featuring this video
               </h2>
               <div className="flex flex-col gap-2">
                 {relatedPlaylists.map((p) => (
@@ -582,7 +601,7 @@ export default async function VideoPage({ params }: Props) {
       )}
       </div>
 
-      <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} keywordPhrase={s.footer_keyword_phrase} />
+      <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} keywordPhrase={s.footer_keyword_phrase} partnersHtml={s.footer_partners_html} />
 
       <script
         type="application/ld+json"

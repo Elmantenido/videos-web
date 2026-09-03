@@ -37,7 +37,7 @@ export default function FollowButton({ playlistId, initialFollowing, initialFoll
 
   return (
     <button type="button" onClick={toggle} disabled={isPending} className={`follow-button ${following ? "is-following" : ""}`}>
-      {following ? "Siguiendo" : "Seguir"} <span>{count}</span>
+      {following ? "Following" : "Follow"} <span>{count}</span>
     </button>
   );
 }

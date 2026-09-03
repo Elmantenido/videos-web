@@ -16,7 +16,7 @@ export default function NewPlaylistForm() {
     startTransition(async () => {
       const result = await createPlaylist(name);
       if (!result.ok) {
-        setError(result.error === "invalid_name" ? "Ponele un nombre a la playlist." : "No se pudo crear la playlist.");
+        setError(result.error === "invalid_name" ? "Give the playlist a name." : "Couldn't create the playlist.");
         return;
       }
       router.push(`/playlists/${result.slug}`);
@@ -29,12 +29,12 @@ export default function NewPlaylistForm() {
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Nombre de la nueva playlist"
+        placeholder="New playlist name"
         required
         className="auth-input"
       />
       <button type="submit" disabled={isPending} className="auth-button">
-        {isPending ? "Creando..." : "Crear playlist"}
+        {isPending ? "Creating..." : "Create Playlist"}
       </button>
       {error && <p className="auth-error">{error}</p>}
     </form>

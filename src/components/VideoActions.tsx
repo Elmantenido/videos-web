@@ -105,7 +105,7 @@ export default function VideoActions({ videoId, initialLikes, initialDislikes, i
         setNewPlaylistName("");
         setPlaylists((prev) => [{ id: result.playlistId, slug: result.slug, name, hasVideo: true }, ...(prev ?? [])]);
       } else {
-        setSaveError("No se pudo crear la playlist.");
+        setSaveError("Couldn't create the playlist.");
       }
     });
   }
@@ -136,15 +136,15 @@ export default function VideoActions({ videoId, initialLikes, initialDislikes, i
           type="button"
           onClick={openPopover}
           className={`save-button ${saved ? "is-active" : ""}`}
-          aria-label="Guardar en playlist"
+          aria-label="Save to playlist"
         >
-          {saved ? "♥" : "♡"} Guardar
+          {saved ? "♥" : "♡"} Save
         </button>
 
         {popoverOpen && (
           <div className="playlist-popover">
             {!playlists ? (
-              <p className="playlist-popover-status">Cargando...</p>
+              <p className="playlist-popover-status">Loading...</p>
             ) : (
               <>
                 {playlists.length > 0 && (
@@ -163,10 +163,10 @@ export default function VideoActions({ videoId, initialLikes, initialDislikes, i
                     type="text"
                     value={newPlaylistName}
                     onChange={(e) => setNewPlaylistName(e.target.value)}
-                    placeholder="Nueva playlist..."
+                    placeholder="New playlist..."
                   />
                   <button type="button" onClick={createAndAdd} disabled={isSaving || !newPlaylistName.trim()}>
-                    Crear
+                    Create
                   </button>
                 </div>
                 {saveError && <p className="auth-error">{saveError}</p>}

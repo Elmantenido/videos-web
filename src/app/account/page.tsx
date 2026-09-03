@@ -7,8 +7,9 @@ import { getSiteSettings } from "@/lib/site-settings";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import NewPlaylistForm from "./NewPlaylistForm";
+import DeletePlaylistButton from "./DeletePlaylistButton";
 
-export const metadata: Metadata = { title: "Mis playlists", robots: { index: false, follow: true } };
+export const metadata: Metadata = { title: "My Playlists", robots: { index: false, follow: true } };
 
 export default async function AccountPage() {
   const session = await getSessionSafely();
@@ -30,9 +31,9 @@ export default async function AccountPage() {
         <div className="category-strip">
           <div>
             <p className="section-kicker">
-              <span></span>Tu cuenta
+              <span></span>Your account
             </p>
-            <h2>Mis playlists</h2>
+            <h2>My Playlists</h2>
           </div>
         </div>
 
@@ -40,23 +41,26 @@ export default async function AccountPage() {
 
         {playlists.length === 0 ? (
           <p className="empty-state">
-            Todavía no creaste ninguna playlist. Guardá un video con el corazón desde su página, o creá
-            una arriba.
+            You haven&apos;t created any playlists yet. Save a video with the heart button from its page,
+            or create one above.
           </p>
         ) : (
           <ul className="playlist-list">
             {playlists.map((p) => (
               <li key={p.id} className="playlist-list-item">
-                <Link href={`/playlists/${p.slug}`}>{p.name}</Link>
-                <span className="playlist-list-meta">
-                  {p._count.items} videos · {p._count.followers} seguidores
-                </span>
+                <div>
+                  <Link href={`/playlists/${p.slug}`}>{p.name}</Link>
+                  <span className="playlist-list-meta">
+                    {p._count.items} videos · {p._count.followers} followers
+                  </span>
+                </div>
+                <DeletePlaylistButton playlistId={p.id} playlistName={p.name} />
               </li>
             ))}
           </ul>
         )}
       </div>
-      <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} keywordPhrase={s.footer_keyword_phrase} />
+      <SiteFooter copyright={s.footer_copyright} tagline={s.footer_tagline} adminLabel={s.footer_admin_link} keywordPhrase={s.footer_keyword_phrase} partnersHtml={s.footer_partners_html} />
     </main>
   );
 }

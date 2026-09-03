@@ -8,9 +8,9 @@ export default async function AuthHeaderButtons() {
   if (session?.user) {
     return (
       <div className="top-auth">
-        <Link href="/account" className="auth-header-link">Mis playlists</Link>
+        <Link href="/account" className="auth-header-link">My Playlists</Link>
         <form action={signOutAction}>
-          <button type="submit" className="auth-header-link">Salir</button>
+          <button type="submit" className="auth-header-link">Sign Out</button>
         </form>
       </div>
     );
