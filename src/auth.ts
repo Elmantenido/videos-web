@@ -12,6 +12,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   // Credentials logins aren't persisted to the Session table by the
   // adapter, so mixing Credentials with an adapter requires JWT sessions.
   session: { strategy: "jwt" },
+  // Self-hosted behind nginx (not Vercel), which already terminates TLS and
+  // forwards X-Forwarded-Proto/Host (see next.config.ts's HSTS comment) --
+  // without this, Auth.js ignores those headers and can build callback URLs
+  // (e.g. Google's) pointing at the wrong scheme/host.
+  trustHost: true,
   pages: {
     signIn: "/sign-in",
   },
