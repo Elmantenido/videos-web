@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export const VIDEO_LISTING_PAGE_SIZE = 24;
 // Recent Uploads / New Releases / Random -- the pages reached directly from
 // the hamburger menu -- use a smaller page size than the full catalog.
-export const SIDEBAR_LISTING_PAGE_SIZE = 7;
+export const SIDEBAR_LISTING_PAGE_SIZE = 20;
 
 export async function getVideoListing(options: {
   where?: Prisma.VideoWhereInput;
