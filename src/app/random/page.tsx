@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/site-settings";
-import { getRandomVideoListing } from "@/lib/video-listing";
+import { getRandomVideoListing, SIDEBAR_LISTING_PAGE_SIZE } from "@/lib/video-listing";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import VideoGridSection from "@/components/VideoGridSection";
@@ -33,7 +33,7 @@ export default async function RandomPage({ searchParams }: Props) {
   const page = Math.max(1, Number(pageParam) || 1);
 
   const [{ videos, totalPages }, s] = await Promise.all([
-    getRandomVideoListing({ page, seed: seedParam }),
+    getRandomVideoListing({ page, seed: seedParam, pageSize: SIDEBAR_LISTING_PAGE_SIZE }),
     getSiteSettings(),
   ]);
 

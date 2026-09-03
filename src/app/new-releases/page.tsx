@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/site-settings";
-import { getVideoListing } from "@/lib/video-listing";
+import { getVideoListing, SIDEBAR_LISTING_PAGE_SIZE } from "@/lib/video-listing";
 import { paginatedCanonical } from "@/lib/seo";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -30,6 +30,7 @@ export default async function NewReleasesPage({ searchParams }: Props) {
       where: { releasedAt: { not: null } },
       orderBy: { releasedAt: "desc" },
       page,
+      pageSize: SIDEBAR_LISTING_PAGE_SIZE,
     }),
     getSiteSettings(),
   ]);

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getSiteSettings } from "@/lib/site-settings";
-import { getVideoListing } from "@/lib/video-listing";
+import { getVideoListing, SIDEBAR_LISTING_PAGE_SIZE } from "@/lib/video-listing";
 import { paginatedCanonical } from "@/lib/seo";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
@@ -26,7 +26,7 @@ export default async function RecentUploadsPage({ searchParams }: Props) {
   const page = Math.max(1, Number(pageParam) || 1);
 
   const [{ videos, totalPages }, s] = await Promise.all([
-    getVideoListing({ orderBy: { createdAt: "desc" }, page }),
+    getVideoListing({ orderBy: { createdAt: "desc" }, page, pageSize: SIDEBAR_LISTING_PAGE_SIZE }),
     getSiteSettings(),
   ]);
 

@@ -2,27 +2,32 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const VIDEO_LISTING_PAGE_SIZE = 24;
+// Recent Uploads / New Releases / Random -- the pages reached directly from
+// the hamburger menu -- use a smaller page size than the full catalog.
+export const SIDEBAR_LISTING_PAGE_SIZE = 7;
 
 export async function getVideoListing(options: {
   where?: Prisma.VideoWhereInput;
   orderBy: Prisma.VideoOrderByWithRelationInput | Prisma.VideoOrderByWithRelationInput[];
   page: number;
+  pageSize?: number;
 }) {
   const where: Prisma.VideoWhereInput = { published: true, ...options.where };
   const page = Math.max(1, options.page);
+  const pageSize = options.pageSize ?? VIDEO_LISTING_PAGE_SIZE;
 
   const [videos, total] = await Promise.all([
     prisma.video.findMany({
       where,
       orderBy: options.orderBy,
       include: { categories: true },
-      skip: (page - 1) * VIDEO_LISTING_PAGE_SIZE,
-      take: VIDEO_LISTING_PAGE_SIZE,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
     }),
     prisma.video.count({ where }),
   ]);
 
-  return { videos, total, totalPages: Math.max(1, Math.ceil(total / VIDEO_LISTING_PAGE_SIZE)) };
+  return { videos, total, totalPages: Math.max(1, Math.ceil(total / pageSize)) };
 }
 
 // Deterministic per-seed shuffle so pagination stays stable across pages
@@ -58,8 +63,9 @@ function shuffleWithSeed<T>(items: T[], seed: string): T[] {
   return result;
 }
 
-export async function getRandomVideoListing(options: { page: number; seed: string }) {
+export async function getRandomVideoListing(options: { page: number; seed: string; pageSize?: number }) {
   const page = Math.max(1, options.page);
+  const pageSize = options.pageSize ?? VIDEO_LISTING_PAGE_SIZE;
   const where: Prisma.VideoWhereInput = { published: true };
 
   const all = await prisma.video.findMany({ where, select: { id: true }, orderBy: { id: "asc" } });
@@ -68,8 +74,8 @@ export async function getRandomVideoListing(options: { page: number; seed: strin
     options.seed
   );
   const total = order.length;
-  const totalPages = Math.max(1, Math.ceil(total / VIDEO_LISTING_PAGE_SIZE));
-  const pageIds = order.slice((page - 1) * VIDEO_LISTING_PAGE_SIZE, page * VIDEO_LISTING_PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const pageIds = order.slice((page - 1) * pageSize, page * pageSize);
 
   const rows = await prisma.video.findMany({
     where: { id: { in: pageIds } },

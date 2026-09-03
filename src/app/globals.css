@@ -37,7 +37,7 @@ a { color: inherit; text-decoration: none; }
    Fixed (not vw) padding so it doesn't eat into that extra room as the
    viewport grows. */
 .header-shell { margin: auto; max-width: 2100px; padding: 0 40px; }
-.topbar { align-items: center; column-gap: 24px; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); height: 120px; }
+.topbar { align-items: center; column-gap: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr); height: 120px; }
 /* Below 1024px the mirrored empty 3rd column that centers the search box
    on wide screens leaves too little room for the logo -- minmax(0, 1fr)'s
    explicit 0 minimum means the logo's column can shrink below its own
@@ -49,9 +49,9 @@ a { color: inherit; text-decoration: none; }
   .top-actions { justify-content: flex-end; }
 }
 .topbar-start { align-items: center; display: flex; gap: 40px; }
-.brand { align-items: center; display: flex; font-size: 26px; font-weight: 800; letter-spacing: .12em; }
+.brand { align-items: center; display: flex; font-size: 22px; font-weight: 800; letter-spacing: .12em; }
 .brand > span:last-child span { color: var(--lime); }
-.brand-mark { align-items: center; background: var(--lime); color: var(--foreground); display: flex; font-size: 26px; height: 38px; justify-content: center; margin-right: 14px; transform: skew(-13deg); width: 36px; }
+.brand-mark { align-items: center; background: var(--lime); color: var(--foreground); display: flex; font-size: 22px; height: 33px; justify-content: center; margin-right: 12px; transform: skew(-13deg); width: 31px; }
 /* Counter-skew the letter so it renders upright and centered inside the
    skewed parallelogram mark instead of leaning/looking off-center. */
 .brand-mark span { display: inline-block; transform: skew(13deg); }
@@ -63,24 +63,23 @@ a { color: inherit; text-decoration: none; }
 .main-nav { display: none; gap: 40px; }
 @media (min-width: 1800px) {
   .main-nav { display: flex; }
+  /* The inline nav only lives in this column, so above 1800px it needs a
+     fixed floor wide enough for logo + all 4 links (measured ~660px) --
+     fr-based sharing with the search column let it get squeezed below
+     that and overlap the search box. Fixed (not fr) so it can't shrink;
+     the search column (and its mirror) absorb whatever's left. */
+  .topbar { grid-template-columns: 700px minmax(0, 1fr) 700px; }
 }
 .main-nav a { color: var(--muted); font-size: 17px; transition: color .2s; white-space: nowrap; }
 .main-nav a:hover, .main-nav a.active { color: var(--foreground); }
 .main-nav a.active { border-bottom: 1px solid var(--lime); padding-bottom: 8px; }
 .top-actions { align-items: center; display: flex; gap: 20px; justify-content: center; min-width: 0; }
 .icon-button { background: transparent; border: 0; color: var(--foreground); cursor: pointer; font-size: 27px; line-height: 1; padding: 4px; transform: rotate(-20deg); }
-.search-box { position: relative; max-width: 560px; width: 100%; }
+.search-box { position: relative; max-width: 760px; width: 100%; }
 .search-input-row { align-items: center; background: var(--panel); border: 1px solid var(--line); display: flex; gap: 6px; padding: 0 4px 0 16px; transition: background-color .15s ease, box-shadow .15s ease; }
 .search-input-row:hover { background: color-mix(in srgb, var(--panel), white 8%); box-shadow: 0 6px 20px rgba(0, 0, 0, .25); }
 .search-input-row:focus-within { border-color: var(--lime); }
 .search-input { background: transparent; border: 0; color: var(--foreground); flex: 1; font-size: 16px; min-width: 0; padding: 13px 0; }
-/* Below 1800px the inline nav is hidden (see .main-nav), so there's slack
-   next to the logo for a wider search box; at/above 1800px that slack is
-   already fully claimed by the inline nav (tuned right at its minimum
-   fit), so this reverts back there instead of reintroducing overlap. */
-@media (min-width: 1024px) and (max-width: 1799px) {
-  .top-actions { width: 280px; }
-}
 .search-input:focus { outline: none; }
 .search-icon-button { font-size: 22px; padding: 8px; transform: none; }
 .search-preview { background: var(--panel); border: 1px solid var(--line); border-top: 0; display: flex; flex-direction: column; gap: 2px; left: 0; max-height: 320px; overflow-y: auto; padding: 8px; position: absolute; right: 0; top: 100%; z-index: 20; }
