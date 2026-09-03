@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { signOutAction } from "@/app/actions/session";
 
 function Icon({ children }: { children: ReactNode }) {
   return (
@@ -118,7 +119,9 @@ const NAV_ITEMS: { href: string; label: string; icon: ReactNode }[] = [
   },
 ];
 
-export default function SidebarNav() {
+type Props = { loggedIn: boolean };
+
+export default function SidebarNav({ loggedIn }: Props) {
   const [open, setOpen] = useState(false);
   // The drawer's markup (nav list + icons) never needs to exist in the DOM
   // until someone actually opens the menu -- there's nothing to show before
@@ -182,6 +185,37 @@ export default function SidebarNav() {
                   </Link>
                 </li>
               ))}
+            </ul>
+            <ul className="sidebar-list sidebar-list-auth">
+              {loggedIn ? (
+                <>
+                  <li>
+                    <Link href="/account" onClick={() => setOpen(false)}>
+                      <span className="sidebar-label">Mis playlists</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <form action={signOutAction}>
+                      <button type="submit" onClick={() => setOpen(false)}>
+                        <span className="sidebar-label">Salir</span>
+                      </button>
+                    </form>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li>
+                    <Link href="/sign-in" onClick={() => setOpen(false)}>
+                      <span className="sidebar-label">Sign In</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/register" onClick={() => setOpen(false)}>
+                      <span className="sidebar-label">Create Account</span>
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </nav>
         </div>

@@ -37,7 +37,7 @@ a { color: inherit; text-decoration: none; }
    Fixed (not vw) padding so it doesn't eat into that extra room as the
    viewport grows. */
 .header-shell { margin: auto; max-width: 2100px; padding: 0 40px; }
-.topbar { align-items: center; column-gap: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr); height: 120px; }
+.topbar { align-items: center; column-gap: 24px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) auto; height: 120px; }
 /* Below 1024px the mirrored empty 3rd column that centers the search box
    on wide screens leaves too little room for the logo -- minmax(0, 1fr)'s
    explicit 0 minimum means the logo's column can shrink below its own
@@ -67,8 +67,8 @@ a { color: inherit; text-decoration: none; }
      fixed floor wide enough for logo + all 4 links (measured ~660px) --
      fr-based sharing with the search column let it get squeezed below
      that and overlap the search box. Fixed (not fr) so it can't shrink;
-     the search column (and its mirror) absorb whatever's left. */
-  .topbar { grid-template-columns: 700px minmax(0, 1fr) 700px; }
+     the search column absorbs whatever's left. */
+  .topbar { grid-template-columns: 700px minmax(0, 1fr) auto; }
 }
 .main-nav a { color: var(--muted); font-size: 17px; transition: color .2s; white-space: nowrap; }
 .main-nav a:hover, .main-nav a.active { color: var(--foreground); }
@@ -91,6 +91,17 @@ a { color: inherit; text-decoration: none; }
 .search-status { color: var(--muted); font-size: 12px; padding: 6px 4px; }
 .admin-link { border: 1px solid var(--line); color: var(--muted); font-size: 12px; padding: 10px 14px; }
 .admin-link span { color: var(--lime); font-size: 17px; margin-left: 6px; }
+/* Hidden below 1024px on purpose -- SidebarNav's drawer carries the same
+   Sign In/Create Account (or Mis playlists/Salir) links at every width, so
+   these header buttons are just a convenience shown where there's room. */
+.top-auth { align-items: center; display: none; gap: 12px; }
+@media (min-width: 1024px) {
+  .top-auth { display: flex; }
+}
+.auth-header-link { color: var(--muted); font-size: 14px; padding: 10px 4px; transition: color .2s; }
+.auth-header-link:hover { color: var(--foreground); }
+.auth-header-link[type="submit"] { background: transparent; border: 0; cursor: pointer; font: inherit; }
+.auth-header-button { background: var(--lime); color: var(--foreground); font-size: 14px; font-weight: 600; padding: 10px 18px; white-space: nowrap; }
 .sidebar-toggle { flex-shrink: 0; font-size: 24px; transform: none; }
 .sidebar-overlay { background: rgba(10, 11, 10, 0); inset: 0; opacity: 0; pointer-events: none; position: fixed; transition: background-color .2s ease, opacity .2s ease; z-index: 300; }
 .sidebar-overlay.is-open { background: rgba(10, 11, 10, .7); opacity: 1; pointer-events: auto; }
@@ -99,8 +110,9 @@ a { color: inherit; text-decoration: none; }
 .sidebar-drawer-top { align-items: center; display: flex; justify-content: space-between; padding: 0 12px 12px 24px; }
 .sidebar-close { background: transparent; border: 0; color: var(--foreground); cursor: pointer; font-size: 20px; padding: 10px; }
 .sidebar-list { display: flex; flex-direction: column; list-style: none; margin: 0; padding: 0; }
-.sidebar-list a { align-items: center; color: var(--muted); display: flex; font-size: 16px; gap: 14px; padding: 14px 24px; transition: background .15s, color .15s; }
-.sidebar-list a:hover { background: rgba(244, 243, 237, .06); color: var(--foreground); }
+.sidebar-list a, .sidebar-list button { align-items: center; background: transparent; border: 0; color: var(--muted); cursor: pointer; display: flex; font: inherit; font-size: 16px; gap: 14px; padding: 14px 24px; text-align: left; transition: background .15s, color .15s; width: 100%; }
+.sidebar-list a:hover, .sidebar-list button:hover { background: rgba(244, 243, 237, .06); color: var(--foreground); }
+.sidebar-list-auth { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 8px; }
 .sidebar-icon { display: flex; flex-shrink: 0; }
 .hero { background-position: center; background-size: cover; height: min(590px, 65vh); min-height: 440px; overflow: hidden; position: relative; }
 .hero-shade { background: linear-gradient(90deg, rgba(10, 12, 10, .98) 0%, rgba(10, 12, 10, .76) 38%, rgba(10, 12, 10, .08) 100%), linear-gradient(0deg, #101110 0%, transparent 25%); inset: 0; position: absolute; }
@@ -191,6 +203,60 @@ em { color: var(--lime); font-family: Georgia, serif; font-style: italic; font-w
    still look like the rest of this small uppercase footer line, not a
    browser-default bold heading. */
 .footer h3 { margin: 0; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; }
+
+/* --- Sign in / Create account -------------------------------------------- */
+.auth-page { align-items: center; display: flex; justify-content: center; padding: 70px 0 100px; }
+.auth-card { background: var(--panel); border: 1px solid var(--line); max-width: 380px; padding: 40px; width: 100%; }
+.auth-card h1 { font-size: 24px; font-weight: 500; margin: 0 0 24px; }
+.auth-form { display: flex; flex-direction: column; gap: 12px; }
+.auth-input { background: var(--background); border: 1px solid var(--line); color: var(--foreground); font-size: 15px; padding: 13px 14px; }
+.auth-input:focus { border-color: var(--lime); outline: none; }
+.auth-button { background: var(--lime); border: 0; color: var(--foreground); cursor: pointer; font-size: 15px; font-weight: 600; padding: 13px 14px; }
+.auth-button:disabled { cursor: not-allowed; opacity: .6; }
+.auth-error { color: #f97316; font-size: 13px; margin: 0; }
+.auth-divider { align-items: center; color: var(--muted); display: flex; font-size: 12px; gap: 12px; margin: 20px 0; text-transform: uppercase; }
+.auth-divider::before, .auth-divider::after { border-top: 1px solid var(--line); content: ""; flex: 1; }
+.auth-google-button { background: transparent; border: 1px solid var(--line); color: var(--foreground); cursor: pointer; font-size: 14px; padding: 12px 14px; width: 100%; }
+.auth-google-button:hover { border-color: var(--lime); }
+.auth-switch { color: var(--muted); font-size: 13px; margin: 24px 0 0; text-align: center; }
+.auth-switch a { color: var(--lime); }
+
+/* --- Mis playlists (account page) ---------------------------------------- */
+.new-playlist-form { align-items: flex-start; display: flex; gap: 12px; margin: 28px 0; max-width: 480px; }
+.new-playlist-form .auth-input { flex: 1; }
+.playlist-list { display: flex; flex-direction: column; list-style: none; margin: 0; padding: 0; }
+.playlist-list-item { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; padding: 18px 4px; }
+.playlist-list-item a { font-size: 16px; }
+.playlist-list-item a:hover { color: var(--lime); }
+.playlist-list-meta { color: var(--muted); font-size: 12px; }
+
+/* --- Follow button (playlist page) --------------------------------------- */
+.follow-button { background: transparent; border: 1px solid var(--line); color: var(--foreground); cursor: pointer; font-size: 13px; font-weight: 600; padding: 10px 18px; }
+.follow-button span { color: var(--muted); margin-left: 6px; }
+.follow-button.is-following { background: var(--lime); border-color: var(--lime); }
+.follow-button.is-following span { color: var(--foreground); opacity: .8; }
+
+/* --- Video actions: like/dislike + save to playlist ---------------------- */
+.video-actions { align-items: center; display: flex; gap: 10px; margin-top: 16px; }
+.vote-button { align-items: center; background: transparent; border: 1px solid var(--line); color: var(--muted); cursor: pointer; display: flex; font-size: 14px; gap: 8px; padding: 10px 16px; }
+.vote-button:hover { border-color: var(--lime); }
+.vote-button.is-active { background: var(--lime); border-color: var(--lime); color: var(--foreground); }
+.vote-button:disabled { cursor: not-allowed; opacity: .7; }
+.save-button-wrap { position: relative; }
+.save-button { background: transparent; border: 1px solid var(--line); color: var(--muted); cursor: pointer; font-size: 14px; padding: 10px 16px; }
+.save-button:hover { border-color: var(--lime); }
+.save-button.is-active { border-color: var(--lime); color: var(--lime); }
+.playlist-popover { background: var(--panel); border: 1px solid var(--line); box-shadow: 0 12px 30px rgba(0, 0, 0, .4); left: 0; padding: 12px; position: absolute; top: calc(100% + 8px); width: 240px; z-index: 30; }
+.playlist-popover-status { color: var(--muted); font-size: 13px; margin: 0; }
+.playlist-popover-list { display: flex; flex-direction: column; gap: 2px; list-style: none; margin: 0 0 10px; max-height: 220px; overflow-y: auto; padding: 0; }
+.playlist-popover-list button { background: transparent; border: 0; color: var(--foreground); cursor: pointer; font-size: 14px; padding: 8px 6px; text-align: left; width: 100%; }
+.playlist-popover-list button:hover { background: rgba(244, 243, 237, .06); }
+.playlist-popover-list span { color: var(--lime); display: inline-block; width: 14px; }
+.playlist-popover-new { display: flex; gap: 6px; }
+.playlist-popover-new input { background: var(--background); border: 1px solid var(--line); color: var(--foreground); flex: 1; font-size: 13px; min-width: 0; padding: 8px; }
+.playlist-popover-new button { background: var(--lime); border: 0; color: var(--foreground); font-size: 13px; padding: 8px 10px; }
+.playlist-popover-new button:disabled { cursor: not-allowed; opacity: .6; }
+
 @media (max-width: 760px) {
   .site-shell { padding: 0 20px; }.header-shell { padding: 0 20px; }.topbar { column-gap: 12px; height: 86px; }.brand { font-size: 20px; }.admin-link { display: none; }
   .hero { margin: 0 -20px; min-height: 480px; }.hero-content { left: 28px; right: 20px; top: 25%; }.hero h1 { font-size: 56px; }.hero-shade { background: linear-gradient(90deg, rgba(10, 12, 10, .95), rgba(10, 12, 10, .25)), linear-gradient(0deg, #101110 0%, transparent 30%); }

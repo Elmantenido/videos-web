@@ -22,6 +22,8 @@ type Props = {
   extraQuery?: string;
   brandPrefix: string;
   brandSuffix: string;
+  /** Skip the kicker/title/"Back to home" row -- for pages that render their own heading. */
+  hideHeading?: boolean;
 };
 
 function pageHref(basePath: string, page: number, extraQuery?: string) {
@@ -42,16 +44,19 @@ export default function VideoGridSection({
   extraQuery,
   brandPrefix,
   brandSuffix,
+  hideHeading = false,
 }: Props) {
   return (
     <section className="catalog-section">
-      <div className="section-heading">
-        <div>
-          <p className="section-kicker">{kicker}</p>
-          <h1>{title}</h1>
+      {!hideHeading && (
+        <div className="section-heading">
+          <div>
+            <p className="section-kicker">{kicker}</p>
+            <h1>{title}</h1>
+          </div>
+          <Link href="/" className="view-all">Back to home <span>→</span></Link>
         </div>
-        <Link href="/" className="view-all">Back to home <span>→</span></Link>
-      </div>
+      )}
 
       <div className="catalog-grid">
         {videos.map((video, i) => (

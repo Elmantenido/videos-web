@@ -49,6 +49,8 @@ model Video {
   viewEvents  VideoView[]
   reports     Report[]
   alerts      VideoAlert[]
+  playlistItems PlaylistItem[]
+  votes       VideoVote[]
 
   @@index([releasedAt])
 }
@@ -170,4 +172,107 @@ model SearchQuery {
   createdAt DateTime @default(now())
 
   @@index([createdAt])
+}
+
+// --- Cuentas de usuario, playlists y votos --------------------------------
+// Sistema de usuarios "reales" (registro/login), separado a propósito del
+// login de admin único en src/lib/auth.ts. Modelos User/Account/Session/
+// VerificationToken siguen la forma estándar que espera @auth/prisma-adapter.
+
+model User {
+  id              String           @id @default(cuid())
+  name            String?
+  email           String           @unique
+  emailVerified   DateTime?
+  image           String?
+  // Null cuando el usuario se registró solo con Google (sin contraseña propia).
+  passwordHash    String?
+  createdAt       DateTime         @default(now())
+  accounts        Account[]
+  sessions        Session[]
+  playlists       Playlist[]
+  votes           VideoVote[]
+  playlistFollows PlaylistFollow[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Playlist {
+  id        String           @id @default(cuid())
+  // Identificador alfanumérico aleatorio (no derivado del nombre) -- ver
+  // src/lib/playlist-slug.ts. URL pública: /playlists/<slug>.
+  slug      String           @unique
+  name      String
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+  items     PlaylistItem[]
+  followers PlaylistFollow[]
+}
+
+model PlaylistItem {
+  id         Int      @id @default(autoincrement())
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  videoId    Int
+  video      Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  addedAt    DateTime @default(now())
+
+  @@unique([playlistId, videoId])
+}
+
+model PlaylistFollow {
+  id         Int      @id @default(autoincrement())
+  playlistId String
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([playlistId, userId])
+}
+
+model VideoVote {
+  id        Int      @id @default(autoincrement())
+  videoId   Int
+  video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // 1 = like, -1 = dislike
+  value     Int
+  updatedAt DateTime @updatedAt
+
+  @@unique([videoId, userId])
 }

@@ -7,10 +7,13 @@ import { getSiteSettings } from "@/lib/site-settings";
 import { absoluteUrl, toIsoDuration } from "@/lib/seo";
 import { isEmbedUrl } from "@/lib/embed";
 import { canaryMarker } from "@/lib/canary";
+import { getSessionSafely } from "@/lib/session";
+import { getVoteState } from "@/app/actions/votes";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import VideoPlayer from "@/components/VideoPlayer";
 import ReportProblemButton from "@/components/ReportProblemButton";
+import VideoActions from "@/components/VideoActions";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -193,6 +196,32 @@ function UpNextCard({ video }: { video: RelatedVideo }) {
   );
 }
 
+type RelatedPlaylist = {
+  id: string;
+  slug: string;
+  name: string;
+  ownerName: string | null;
+  itemCount: number;
+  followerCount: number;
+};
+
+function RelatedPlaylistRow({ playlist }: { playlist: RelatedPlaylist }) {
+  return (
+    <Link
+      href={`/playlists/${playlist.slug}`}
+      className="flex items-center justify-between rounded border border-white/10 p-3 transition-colors hover:border-[var(--lime)]"
+    >
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-gray-200">{playlist.name}</p>
+        <p className="mt-0.5 text-xs text-gray-500">
+          {playlist.ownerName ?? "Usuario"} · {playlist.itemCount} videos
+        </p>
+      </div>
+      <span className="flex-shrink-0 text-xs text-gray-500">{playlist.followerCount} ♥</span>
+    </Link>
+  );
+}
+
 async function getVideo(slug: string) {
   return prisma.video.findUnique({
     where: { slug, published: true },
@@ -230,7 +259,25 @@ export default async function VideoPage({ params }: Props) {
   const video = await getVideo(slug);
   if (!video) notFound();
 
-  const s = await getSiteSettings();
+  const [s, session, voteState, relatedPlaylistRows] = await Promise.all([
+    getSiteSettings(),
+    getSessionSafely(),
+    getVoteState(video.id),
+    prisma.playlist.findMany({
+      where: { items: { some: { videoId: video.id } } },
+      include: { user: { select: { name: true } }, _count: { select: { items: true, followers: true } } },
+      orderBy: { followers: { _count: "desc" } },
+      take: 6,
+    }),
+  ]);
+  const relatedPlaylists: RelatedPlaylist[] = relatedPlaylistRows.map((p) => ({
+    id: p.id,
+    slug: p.slug,
+    name: p.name,
+    ownerName: p.user.name,
+    itemCount: p._count.items,
+    followerCount: p._count.followers,
+  }));
   const previewImages = extractPreviewImages(video.previewHtml ?? "");
 
   const categoryIds = video.categories.map((c) => c.id);
@@ -467,6 +514,27 @@ export default async function VideoPage({ params }: Props) {
               </h2>
               <p className="leading-relaxed text-gray-300">{video.description}</p>
               <span style={{ display: "none" }} aria-hidden="true" data-cid={canaryMarker(video.id)} />
+            </div>
+          )}
+
+          <VideoActions
+            videoId={video.id}
+            initialLikes={voteState.likes}
+            initialDislikes={voteState.dislikes}
+            initialMyVote={voteState.myVote}
+            loggedIn={Boolean(session?.user)}
+          />
+
+          {relatedPlaylists.length > 0 && (
+            <div className="mt-6 border-t border-white/10 pt-4">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Playlists con este video
+              </h2>
+              <div className="flex flex-col gap-2">
+                {relatedPlaylists.map((p) => (
+                  <RelatedPlaylistRow key={p.id} playlist={p} />
+                ))}
+              </div>
             </div>
           )}
         </div>
